@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XudoBudoGame</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Telegram Web App script with fallback -->
+    <script>
+        // Create fallback if Telegram script fails to load
+        window.addEventListener('DOMContentLoaded', function() {
+            if (!window.Telegram) {
+                window.Telegram = {
+                    WebApp: {
+                        expand: () => {},
+                        ready: () => {},
+                        close: () => {},
+                        colorScheme: 'light',
+                        onEvent: () => {},
+                        HapticFeedback: {
+                            impactOccurred: () => {},
+                            notificationOccurred: () => {}
+                        },
+                        BackButton: {
+                            show: () => {},
+                            hide: () => {}
+                        }
+                    }
+                };
+            }
+        });
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js" onerror="console.log('Telegram script not loaded - using fallback')"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="logo">XudoBudoGame</h1>
+            <div class="header-actions">
+                <button class="top-up-btn" onclick="openTopUpModal()">
+                    <span class="top-up-icon">⭐</span>
+                    <span class="top-up-text">Пополнить</span>
+                </button>
+                <div class="balance">
+                    <span class="balance-icon">⭐</span>
+                    <span class="balance-amount">1,000</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Games Section -->
+            <section id="games" class="section active">
+                <div class="section-header">
+                    <h2>Игры</h2>
+                </div>
+                <div class="games-grid">
+                    <div class="game-card crash-game" onclick="openCrashGame()">
+                        <div class="game-icon">
+                            <img src="raketa.png" alt="Crash Game" class="rocket-icon">
+                        </div>
+                        <div class="game-info">
+                            <h3>Crash</h3>
+                            <p>Поймай момент и забери выигрыш!</p>
+                        </div>
+                        <div class="game-status online">
+                            <span class="status-dot"></span>
+                            Online
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Freebies Section -->
+            <section id="freebies" class="section">
+                <div class="section-header">
+                    <h2>Халява</h2>
+                </div>
+                <div class="freebies-container">
+                    <div class="freebie-card">
+                        <div class="freebie-icon">🎁</div>
+                        <h3>Промокод</h3>
+                        <p>Введи промокод и получи награду</p>
+                        <button class="promo-btn" onclick="openPromoModal()">Ввести</button>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile" class="section">
+                <div class="section-header">
+                    <h2>Профиль</h2>
+                </div>
+                <div class="profile-container">
+                    <div class="profile-avatar">
+                        <div class="avatar-circle">
+                            <span class="avatar-text">XB</span>
+                        </div>
+                    </div>
+                    <div class="profile-info">
+                        <h3 class="username">Player</h3>
+                        <p class="user-level">Уровень 1</p>
+                    </div>
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="profileBalance">1,000</span>
+                            <span class="stat-label">Звезды</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="profileGames">0</span>
+                            <span class="stat-label">Игр</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="profileWins">0</span>
+                            <span class="stat-label">Побед</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Promo Code Modal -->
+        <div id="promoModal" class="modal">
+            <div class="modal-content promo-modal">
+                <div class="modal-header">
+                    <h3>🎁 Промокод</h3>
+                    <button class="close-btn" onclick="closePromoModal()">&times;</button>
+                </div>
+                <div class="promo-container">
+                    <div class="promo-info">
+                        <div class="promo-description">
+                            Введите промокод и получите бонусные звезды!
+                        </div>
+                    </div>
+                    
+                    <div class="promo-input-section">
+                        <div class="promo-input-wrapper">
+                            <input type="text" id="promoCodeInput" placeholder="Введите промокод" maxlength="20">
+                            <span class="input-icon">🎁</span>
+                        </div>
+                        <button class="activate-promo-btn" onclick="activatePromoCode()">
+                            Активировать
+                        </button>
+                    </div>
+                    
+                    <div class="promo-history">
+                        <div class="history-title">Активированные промокоды:</div>
+                        <div class="activated-promos" id="activatedPromos">
+                            <div class="no-promos">Промокоды еще не активированы</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Top Up Modal -->
+        <div id="topUpModal" class="modal">
+            <div class="modal-content top-up-modal">
+                <div class="modal-header">
+                    <h3>⭐ Пополнение баланса</h3>
+                    <button class="close-btn" onclick="closeTopUpModal()">&times;</button>
+                </div>
+                <div class="top-up-container">
+                    <div class="top-up-info">
+                        <div class="current-balance">
+                            <span class="balance-label">Текущий баланс:</span>
+                            <span class="balance-value" id="currentBalance">1,000 ⭐</span>
+                        </div>
+                        <div class="exchange-info">
+                            <span class="exchange-text">Пополнение через Telegram Stars</span>
+                        </div>
+                    </div>
+                    
+                    <div class="custom-amount">
+                        <div class="custom-title">Введите количество звезд:</div>
+                        <div class="custom-input-section">
+                            <div class="custom-input-wrapper">
+                                <input type="number" id="customStarsAmount" placeholder="Количество звезд" min="1" max="2500" value="100">
+                                <span class="input-suffix">⭐</span>
+                            </div>
+                            <button class="custom-buy-btn" onclick="purchaseCustomStars()">
+                                Купить за <span id="starsPrice">100</span> Stars
+                            </button>
+                        </div>
+                        <div class="custom-info">
+                            <span id="customCoinsPreview">Получите: 100 ⭐</span>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-info">
+                        <div class="info-item">
+                            <span class="info-icon">⚡</span>
+                            <span class="info-text">Мгновенное зачисление</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">🔒</span>
+                            <span class="info-text">Безопасная оплата через Telegram</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">💫</span>
+                            <span class="info-text">Курс: 1 Telegram Star = 1 игровая звезда</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crash Game Modal -->
+        <div id="crashGameModal" class="modal">
+            <div class="modal-content crash-modal">
+                <div class="modal-header">
+                    <h3>🚀 Crash</h3>
+                    <button class="close-btn" onclick="closeCrashGame()">&times;</button>
+                </div>
+                <div class="crash-game-container">
+                    <!-- Game Chart Area -->
+                    <div class="game-chart">
+                        <canvas id="gameCanvas" width="340" height="200"></canvas>
+                        <div class="multiplier-display" id="multiplierDisplay">1.00x</div>
+                        <div class="rocket-plane" id="rocketPlane">
+                            <img src="raketa.png" alt="Rocket" class="rocket-img">
+                        </div>
+                        <div class="game-status" id="gameStatus">Ожидание...</div>
+                    </div>
+                    
+                    <!-- Betting Controls -->
+                    <div class="betting-panel">
+                        <div class="bet-input-section">
+                            <div class="bet-group">
+                                <label>Ставка</label>
+                                <div class="bet-input-wrapper">
+                                    <input type="number" id="betAmount" value="10" min="1" step="1">
+                                    <span class="currency">⭐</span>
+                                </div>
+                            </div>
+                            <div class="auto-cashout-group">
+                                <label>Авто-вывод</label>
+                                <div class="auto-input-wrapper">
+                                    <input type="number" id="autoCashout" value="2.00" min="1.01" max="1000" step="0.01">
+                                    <span class="multiplier-suffix">x</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button id="betBtn" class="bet-button" onclick="placeBet()">
+                                <span class="btn-text">Поставить</span>
+                                <span class="btn-amount">10 ⭐</span>
+                            </button>
+                            <button id="cashoutBtn" class="cashout-button" onclick="cashOut()" disabled>
+                                <span class="btn-text">Забрать</span>
+                                <span class="btn-multiplier">0 ⭐</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Game History -->
+                    <div class="game-history">
+                        <div class="history-title">История</div>
+                        <div class="history-items" id="historyItems">
+                            <span class="history-item high">5.67x</span>
+                            <span class="history-item medium">2.45x</span>
+                            <span class="history-item low">1.23x</span>
+                            <span class="history-item high">8.91x</span>
+                            <span class="history-item low">1.05x</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Players List -->
+                    <div class="players-section">
+                        <div class="players-title">Игроки в раунде</div>
+                        <div class="players-list" id="playersList">
+                            <div class="player-item">
+                                <span class="player-name">Player1</span>
+                                <span class="player-bet">500 ⭐</span>
+                                <span class="player-status waiting">Ждет</span>
+                            </div>
+                            <div class="player-item">
+                                <span class="player-name">Player2</span>
+                                <span class="player-bet">200 ⭐</span>
+                                <span class="player-status cashed">2.15x</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="showSection('games')">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">Игры</span>
+            </button>
+            <button class="nav-item" onclick="showSection('freebies')">
+                <span class="nav-icon">🎁</span>
+                <span class="nav-label">Халява</span>
+            </button>
+            <button class="nav-item" onclick="showSection('profile')">
+                <span class="nav-icon">👤</span>
+                <span class="nav-label">Профиль</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
