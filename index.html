@@ -87,7 +87,7 @@
                     </button>
                     <h2 class="crash-title">🚀 Crash Game</h2>
                 </div>
-                <div class="crash-game-fullscreen">
+                <div class="crash-game-fullscreen"></div>
                     <!-- Game Chart Area -->
                     <div class="game-chart">
                         <canvas id="gameCanvas" width="340" height="200"></canvas>
@@ -138,6 +138,24 @@
                             <span class="history-item low">1.23x</span>
                             <span class="history-item high">8.91x</span>
                             <span class="history-item low">1.05x</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Real Players Section -->
+                    <div class="real-players-section">
+                        <div class="players-header">
+                            <div class="players-title">
+                                <span class="title-icon">👥</span>
+                                <span class="title-text">Игроки с вами</span>
+                                <span class="players-count" id="realPlayersCount">1</span>
+                            </div>
+                            <div class="online-indicator">
+                                <span class="online-dot"></span>
+                                <span class="online-text">LIVE</span>
+                            </div>
+                        </div>
+                        <div class="real-players-list" id="realPlayersList">
+                            <!-- Реальные игроки будут добавлены динамически -->
                         </div>
                     </div>
                 </div>
