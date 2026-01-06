@@ -60,7 +60,7 @@
                     <h2>Игры</h2>
                 </div>
                 <div class="games-grid">
-                    <div class="game-card crash-game" onclick="openCrashGame()">
+                    <div class="game-card crash-game" onclick="showSection('crash')">
                         <div class="game-card-content">
                             <div class="game-icon">
                                 <img src="raketa.png" alt="Crash Game" class="rocket-icon">
@@ -73,6 +73,71 @@
                         <div class="game-status online">
                             <span class="status-dot"></span>
                             Online
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Crash Game Section -->
+            <section id="crash" class="section">
+                <div class="crash-game-header">
+                    <button class="back-btn" onclick="showSection('games')">
+                        <span class="back-icon">←</span>
+                        <span class="back-text">Назад</span>
+                    </button>
+                    <h2 class="crash-title">🚀 Crash Game</h2>
+                </div>
+                <div class="crash-game-fullscreen">
+                    <!-- Game Chart Area -->
+                    <div class="game-chart">
+                        <canvas id="gameCanvas" width="340" height="200"></canvas>
+                        <div class="multiplier-display" id="multiplierDisplay">1.00x</div>
+                        <div class="rocket-plane" id="rocketPlane">
+                            <img src="raketa.png" alt="Rocket" class="rocket-img">
+                        </div>
+                        <div class="game-status" id="gameStatus">Ожидание...</div>
+                    </div>
+                    
+                    <!-- Betting Controls -->
+                    <div class="betting-panel">
+                        <div class="bet-input-section">
+                            <div class="bet-group">
+                                <label>Ставка</label>
+                                <div class="bet-input-wrapper">
+                                    <input type="number" id="betAmount" value="10" min="1" step="1">
+                                    <span class="currency">⭐</span>
+                                </div>
+                            </div>
+                            <div class="auto-cashout-group">
+                                <label>Авто-вывод</label>
+                                <div class="auto-input-wrapper">
+                                    <input type="number" id="autoCashout" value="2.00" min="1.01" max="1000" step="0.01">
+                                    <span class="multiplier-suffix">x</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button id="betBtn" class="bet-button" onclick="placeBet()">
+                                <span class="btn-text">Поставить</span>
+                                <span class="btn-amount">10 ⭐</span>
+                            </button>
+                            <button id="cashoutBtn" class="cashout-button" onclick="cashOut()" disabled>
+                                <span class="btn-text">Забрать</span>
+                                <span class="btn-multiplier">0 ⭐</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Game History -->
+                    <div class="game-history">
+                        <div class="history-title">История</div>
+                        <div class="history-items" id="historyItems">
+                            <span class="history-item high">5.67x</span>
+                            <span class="history-item medium">2.45x</span>
+                            <span class="history-item low">1.23x</span>
+                            <span class="history-item high">8.91x</span>
+                            <span class="history-item low">1.05x</span>
                         </div>
                     </div>
                 </div>
@@ -235,85 +300,8 @@
         </div>
 
         <!-- Crash Game Modal -->
-        <div id="crashGameModal" class="modal">
-            <div class="modal-content crash-modal">
-                <div class="modal-header">
-                    <h3>🚀 Crash</h3>
-                    <button class="close-btn" onclick="closeCrashGame()">&times;</button>
-                </div>
-                <div class="crash-game-container">
-                    <!-- Game Chart Area -->
-                    <div class="game-chart">
-                        <canvas id="gameCanvas" width="340" height="200"></canvas>
-                        <div class="multiplier-display" id="multiplierDisplay">1.00x</div>
-                        <div class="rocket-plane" id="rocketPlane">
-                            <img src="raketa.png" alt="Rocket" class="rocket-img">
-                        </div>
-                        <div class="game-status" id="gameStatus">Ожидание...</div>
-                    </div>
-                    
-                    <!-- Betting Controls -->
-                    <div class="betting-panel">
-                        <div class="bet-input-section">
-                            <div class="bet-group">
-                                <label>Ставка</label>
-                                <div class="bet-input-wrapper">
-                                    <input type="number" id="betAmount" value="10" min="1" step="1">
-                                    <span class="currency">⭐</span>
-                                </div>
-                            </div>
-                            <div class="auto-cashout-group">
-                                <label>Авто-вывод</label>
-                                <div class="auto-input-wrapper">
-                                    <input type="number" id="autoCashout" value="2.00" min="1.01" max="1000" step="0.01">
-                                    <span class="multiplier-suffix">x</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button id="betBtn" class="bet-button" onclick="placeBet()">
-                                <span class="btn-text">Поставить</span>
-                                <span class="btn-amount">10 ⭐</span>
-                            </button>
-                            <button id="cashoutBtn" class="cashout-button" onclick="cashOut()" disabled>
-                                <span class="btn-text">Забрать</span>
-                                <span class="btn-multiplier">0 ⭐</span>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Game History -->
-                    <div class="game-history">
-                        <div class="history-title">История</div>
-                        <div class="history-items" id="historyItems">
-                            <span class="history-item high">5.67x</span>
-                            <span class="history-item medium">2.45x</span>
-                            <span class="history-item low">1.23x</span>
-                            <span class="history-item high">8.91x</span>
-                            <span class="history-item low">1.05x</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Players List -->
-                    <div class="players-section">
-                        <div class="players-header">
-                            <div class="players-title">
-                                <span class="title-icon">👥</span>
-                                <span class="title-text">Игроки онлайн</span>
-                                <span class="players-count" id="playersCount">8</span>
-                            </div>
-                            <div class="online-indicator">
-                                <span class="online-dot"></span>
-                                <span class="online-text">LIVE</span>
-                            </div>
-                        </div>
-                        <div class="players-list" id="playersList">
-                            <!-- Игроки будут добавлены динамически -->
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div id="crashGameModal" class="modal" style="display: none;">
+            <!-- Удален - теперь используется полноэкранная секция -->
         </div>
 
         <!-- Bottom Navigation -->
