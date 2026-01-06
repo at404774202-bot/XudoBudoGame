@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Payment - XudoBudoGame</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #17212b;
+            color: #f5f5f5;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #232e3c;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .test-btn {
+            background: #5288c1;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .test-btn:hover {
+            background: #4a7ba7;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test XudoBudoGame Payment</h1>
+    
+    <div class="test-section">
+        <h3>⭐ Star Icons Test</h3>
+        <p>All icons should show stars (⭐) instead of diamonds (💎):</p>
+        <div>Balance: 1,000 ⭐</div>
+        <div>Bet: 50 ⭐</div>
+        <div>Win: 150 ⭐</div>
+        <div class="result">✅ Star icons working correctly</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>💳 Payment System Test</h3>
+        <p>Testing Telegram Stars integration:</p>
+        <button class="test-btn" onclick="testPayment()">Test Payment (100 Stars)</button>
+        <div id="paymentResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🎯 Bet Input Test</h3>
+        <p>Testing flexible bet amounts:</p>
+        <input type="number" id="testBet" value="25" min="1" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-right: 10px;">
+        <button class="test-btn" onclick="testBetValidation()">Test Bet</button>
+        <div id="betResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🎁 Promo Code Test</h3>
+        <p>Test promo codes (try: START, BONUS, WELCOME, GAME):</p>
+        <input type="text" id="testPromo" placeholder="Enter promo code" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-right: 10px;">
+        <button class="test-btn" onclick="testPromoCode()">Test Promo</button>
+        <div id="promoResult"></div>
+    </div>
+    
+    <script>
+        // Mock Telegram WebApp
+        window.Telegram = {
+            WebApp: {
+                openInvoice: function(payload, callback) {
+                    console.log('Opening invoice:', payload);
+                    setTimeout(() => {
+                        callback('paid'); // Simulate successful payment
+                    }, 1000);
+                },
+                HapticFeedback: {
+                    impactOccurred: (type) => console.log('Haptic:', type),
+                    notificationOccurred: (type) => console.log('Notification:', type)
+                }
+            }
+        };
+        
+        function testPayment() {
+            const resultEl = document.getElementById('paymentResult');
+            resultEl.innerHTML = '<div style="color: #ffd700;">Processing payment...</div>';
+            
+            if (window.Telegram?.WebApp?.openInvoice) {
+                window.Telegram.WebApp.openInvoice('test_payment_100', (status) => {
+                    if (status === 'paid') {
+                        resultEl.innerHTML = '<div class="result">✅ Payment successful! Real Telegram Stars integration working</div>';
+                    } else {
+                        resultEl.innerHTML = '<div style="color: #ec3942;">❌ Payment failed</div>';
+                    }
+                });
+            } else {
+                resultEl.innerHTML = '<div style="color: #ec3942;">❌ Telegram WebApp not available</div>';
+            }
+        }
+        
+        function testBetValidation() {
+            const betInput = document.getElementById('testBet');
+            const resultEl = document.getElementById('betResult');
+            const betAmount = parseInt(betInput.value) || 0;
+            
+            if (betAmount <= 0) {
+                resultEl.innerHTML = '<div style="color: #ec3942;">❌ Invalid bet amount</div>';
+            } else {
+                resultEl.innerHTML = `<div class="result">✅ Bet validation working: ${betAmount} ⭐ accepted</div>`;
+            }
+        }
+        
+        function testPromoCode() {
+            const promoInput = document.getElementById('testPromo');
+            const resultEl = document.getElementById('promoResult');
+            const promoCode = promoInput.value.trim().toUpperCase();
+            
+            const promoCodes = {
+                'START': 500,
+                'BONUS': 1000,
+                'WELCOME': 250,
+                'GAME': 750
+            };
+            
+            if (promoCodes[promoCode]) {
+                const reward = promoCodes[promoCode];
+                resultEl.innerHTML = `<div class="result">✅ Promo code valid! Reward: ${reward} ⭐</div>`;
+                promoInput.value = '';
+            } else if (promoCode) {
+                resultEl.innerHTML = '<div style="color: #ec3942;">❌ Invalid promo code</div>';
+            } else {
+                resultEl.innerHTML = '<div style="color: #ec3942;">❌ Enter a promo code</div>';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Subscription System - XudoBudoGame</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #17212b;
+            color: #f5f5f5;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #232e3c;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .test-btn {
+            background: #5288c1;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .test-btn:hover {
+            background: #4a7ba7;
+        }
+        .test-btn.danger {
+            background: #ec3942;
+        }
+        .test-btn.warning {
+            background: #ff9800;
+        }
+        .test-btn.success {
+            background: #4caf50;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px;
+        }
+        .status-subscribed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+        .status-not-subscribed {
+            background: rgba(236, 57, 66, 0.2);
+            color: #ec3942;
+        }
+        .status-grace {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+        }
+        .config-section {
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+        .config-item {
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .config-input {
+            background: #17212b;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #f5f5f5;
+            padding: 6px 10px;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔒 Test Subscription System</h1>
+    
+    <div class="test-section config-section">
+        <h3>⚙️ Configuration</h3>
+        <div class="config-item">
+            <label>Bot Token:</label>
+            <input type="text" class="config-input" id="botToken" value="8553184364:AAFJbKdlGBeQgpYXw51SoqcfGJ-ezDMt6Oc">
+        </div>
+        <div class="config-item">
+            <label>Check Frequency (sec):</label>
+            <input type="number" class="config-input" id="checkFreq" value="120" min="30" max="600">
+        </div>
+        <div class="config-item">
+            <label>Grace Period (sec):</label>
+            <input type="number" class="config-input" id="gracePeriod" value="300" min="60" max="900">
+        </div>
+        <button class="test-btn" onclick="updateConfig()">Update Config</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>📊 Current Status</h3>
+        <div id="currentStatus">
+            <div>Subscription Status: <span class="status-indicator status-not-subscribed" id="subStatus">Not Checked</span></div>
+            <div>Grace Period: <span id="graceStatus">Inactive</span></div>
+            <div>Last Check: <span id="lastCheck">Never</span></div>
+            <div>User ID: <span id="userId">Not Set</span></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🧪 Test Scenarios</h3>
+        <button class="test-btn success" onclick="simulateSubscribed()">✅ Simulate Subscribed</button>
+        <button class="test-btn danger" onclick="simulateUnsubscribed()">❌ Simulate Unsubscribed</button>
+        <button class="test-btn warning" onclick="simulateGracePeriod()">⚠️ Simulate Grace Period</button>
+        <button class="test-btn" onclick="testManualCheck()">🔄 Manual Check</button>
+        <div id="testResults"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🎯 Required Channels</h3>
+        <div id="channelsList">
+            <div>📢 @xudobudo_news (ID: -1001234567890)</div>
+            <div>🎮 @xudobudo_updates (ID: -1001234567891)</div>
+        </div>
+        <p style="font-size: 12px; color: #708499; margin-top: 10px;">
+            ⚠️ Replace with real channel IDs in production
+        </p>
+    </div>
+    
+    <div class="test-section">
+        <h3>🔧 API Test</h3>
+        <button class="test-btn" onclick="testBotAPI()">Test Bot API Connection</button>
+        <button class="test-btn" onclick="testChannelAccess()">Test Channel Access</button>
+        <div id="apiResults"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>📱 UI Components Test</h3>
+        <button class="test-btn" onclick="testSubscriptionModal()">Show Subscription Modal</button>
+        <button class="test-btn" onclick="testGraceWarning()">Show Grace Warning</button>
+        <button class="test-btn" onclick="testLockOverlay()">Show Lock Overlay</button>
+        <button class="test-btn danger" onclick="clearAllUI()">Clear All UI</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>📋 Test Checklist</h3>
+        <div style="font-size: 14px; line-height: 1.6;">
+            <div>☐ Bot token is valid</div>
+            <div>☐ Channel IDs are correct</div>
+            <div>☐ Bot is admin in channels</div>
+            <div>☐ API calls work without CORS errors</div>
+            <div>☐ Subscription check works</div>
+            <div>☐ Grace period functions correctly</div>
+            <div>☐ UI locks/unlocks properly</div>
+            <div>☐ Periodic checking works</div>
+        </div>
+    </div>
+    
+    <script>
+        let testState = {
+            isSubscribed: false,
+            inGracePeriod: false,
+            lastCheck: null,
+            userId: 123456789
+        };
+        
+        function updateConfig() {
+            const botToken = document.getElementById('botToken').value;
+            const checkFreq = parseInt(document.getElementById('checkFreq').value) * 1000;
+            const gracePeriod = parseInt(document.getElementById('gracePeriod').value) * 1000;
+            
+            console.log('Updated config:', { botToken, checkFreq, gracePeriod });
+            
+            document.getElementById('testResults').innerHTML = 
+                '<div class="result">✅ Configuration updated successfully</div>';
+        }
+        
+        function simulateSubscribed() {
+            testState.isSubscribed = true;
+            testState.inGracePeriod = false;
+            updateStatusDisplay();
+            
+            document.getElementById('testResults').innerHTML = 
+                '<div class="result">✅ Simulated: User is subscribed to all channels</div>';
+        }
+        
+        function simulateUnsubscribed() {
+            testState.isSubscribed = false;
+            testState.inGracePeriod = false;
+            updateStatusDisplay();
+            
+            document.getElementById('testResults').innerHTML = 
+                '<div class="result" style="background: rgba(236, 57, 66, 0.1); border-color: rgba(236, 57, 66, 0.3);">❌ Simulated: User is not subscribed</div>';
+        }
+        
+        function simulateGracePeriod() {
+            testState.isSubscribed = false;
+            testState.inGracePeriod = true;
+            updateStatusDisplay();
+            
+            document.getElementById('testResults').innerHTML = 
+                '<div class="result" style="background: rgba(255, 152, 0, 0.1); border-color: rgba(255, 152, 0, 0.3);">⚠️ Simulated: Grace period active (5:00 remaining)</div>';
+        }
+        
+        function testManualCheck() {
+            testState.lastCheck = new Date().toLocaleTimeString();
+            updateStatusDisplay();
+            
+            document.getElementById('testResults').innerHTML = 
+                '<div class="result">🔄 Manual subscription check performed</div>';
+        }
+        
+        function updateStatusDisplay() {
+            const statusEl = document.getElementById('subStatus');
+            const graceEl = document.getElementById('graceStatus');
+            const lastCheckEl = document.getElementById('lastCheck');
+            const userIdEl = document.getElementById('userId');
+            
+            if (testState.isSubscribed) {
+                statusEl.textContent = 'Subscribed';
+                statusEl.className = 'status-indicator status-subscribed';
+            } else if (testState.inGracePeriod) {
+                statusEl.textContent = 'Grace Period';
+                statusEl.className = 'status-indicator status-grace';
+            } else {
+                statusEl.textContent = 'Not Subscribed';
+                statusEl.className = 'status-indicator status-not-subscribed';
+            }
+            
+            graceEl.textContent = testState.inGracePeriod ? 'Active (5:00)' : 'Inactive';
+            lastCheckEl.textContent = testState.lastCheck || 'Never';
+            userIdEl.textContent = testState.userId;
+        }
+        
+        async function testBotAPI() {
+            const botToken = document.getElementById('botToken').value;
+            const apiUrl = `https://api.telegram.org/bot${botToken}/getMe`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                if (data.ok) {
+                    document.getElementById('apiResults').innerHTML = 
+                        `<div class="result">✅ Bot API works! Bot: @${data.result.username}</div>`;
+                } else {
+                    document.getElementById('apiResults').innerHTML = 
+                        `<div class="result" style="background: rgba(236, 57, 66, 0.1);">❌ API Error: ${data.description}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('apiResults').innerHTML = 
+                    `<div class="result" style="background: rgba(236, 57, 66, 0.1);">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testChannelAccess() {
+            const botToken = document.getElementById('botToken').value;
+            const channelId = -1001234567890; // Test channel ID
+            const userId = testState.userId;
+            
+            const apiUrl = `https://api.telegram.org/bot${botToken}/getChatMember`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: channelId,
+                        user_id: userId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    document.getElementById('apiResults').innerHTML = 
+                        `<div class="result">✅ Channel access works! Status: ${data.result.status}</div>`;
+                } else {
+                    document.getElementById('apiResults').innerHTML = 
+                        `<div class="result" style="background: rgba(236, 57, 66, 0.1);">❌ Channel Error: ${data.description}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('apiResults').innerHTML = 
+                    `<div class="result" style="background: rgba(236, 57, 66, 0.1);">❌ CORS/Network Error: ${error.message}</div>`;
+            }
+        }
+        
+        function testSubscriptionModal() {
+            alert('🔒 Subscription Modal would open here\n\nFeatures:\n- List of required channels\n- Subscribe buttons\n- Real-time status\n- Cannot close without subscription');
+        }
+        
+        function testGraceWarning() {
+            alert('⚠️ Grace Period Warning would show here\n\nFeatures:\n- Orange warning banner\n- Countdown timer\n- Quick subscribe button\n- Auto-hide when subscribed');
+        }
+        
+        function testLockOverlay() {
+            alert('🔒 Lock Overlay would show here\n\nFeatures:\n- Full screen overlay\n- Blocks all interactions\n- Subscribe button only\n- Cannot be dismissed');
+        }
+        
+        function clearAllUI() {
+            document.getElementById('testResults').innerHTML = '';
+            document.getElementById('apiResults').innerHTML = '';
+            alert('✅ All UI elements cleared');
+        }
+        
+        // Initialize
+        updateStatusDisplay();
+    </script>
+</body>
+</html>

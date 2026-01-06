@@ -1,0 +1,25 @@
+{
+  "name": "xudobudogame-admin-bot",
+  "version": "1.0.0",
+  "description": "Админ бот для управления обязательными каналами XudoBudoGame",
+  "main": "bot-admin.js",
+  "scripts": {
+    "start": "node bot-admin.js",
+    "dev": "nodemon bot-admin.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "admin",
+    "channels",
+    "subscription"
+  ],
+  "author": "XudoBudoGame",
+  "license": "MIT"
+}
