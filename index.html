@@ -167,24 +167,68 @@
         <div id="topUpModal" class="modal">
             <div class="modal-content top-up-modal">
                 <div class="modal-header">
-                    <h3>⭐ Пополнение баланса</h3>
+                    <h3>💎 Пополнение баланса</h3>
                     <button class="close-btn" onclick="closeTopUpModal()">&times;</button>
                 </div>
                 <div class="top-up-container">
-                    <div class="current-balance-info">
-                        <span class="balance-label">Текущий баланс:</span>
-                        <span class="balance-value" id="currentBalance">1,000 ⭐</span>
+                    <div class="balance-display">
+                        <div class="balance-card">
+                            <div class="balance-icon">⭐</div>
+                            <div class="balance-info">
+                                <span class="balance-label">Текущий баланс</span>
+                                <span class="balance-value" id="currentBalance">1,000 ⭐</span>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="top-up-question">
-                        <h4>На сколько вы хотите пополнить баланс?</h4>
-                        <div class="amount-input-wrapper">
-                            <input type="number" id="topUpAmount" placeholder="Введите сумму" min="1" max="10000" value="">
-                            <span class="input-currency">⭐</span>
+                    <div class="top-up-section">
+                        <div class="section-title">
+                            <h4>💰 Сумма пополнения</h4>
+                            <p class="section-subtitle">Выберите или введите желаемую сумму</p>
                         </div>
-                        <button class="purchase-btn" onclick="purchaseFromInput()">
-                            Пополнить
-                        </button>
+                        
+                        <div class="quick-amounts">
+                            <button class="quick-amount-btn" onclick="setQuickAmount(100)">
+                                <span class="amount">100</span>
+                                <span class="currency">⭐</span>
+                            </button>
+                            <button class="quick-amount-btn" onclick="setQuickAmount(500)">
+                                <span class="amount">500</span>
+                                <span class="currency">⭐</span>
+                            </button>
+                            <button class="quick-amount-btn" onclick="setQuickAmount(1000)">
+                                <span class="amount">1,000</span>
+                                <span class="currency">⭐</span>
+                            </button>
+                            <button class="quick-amount-btn" onclick="setQuickAmount(2500)">
+                                <span class="amount">2,500</span>
+                                <span class="currency">⭐</span>
+                            </button>
+                        </div>
+                        
+                        <div class="custom-amount">
+                            <div class="amount-input-container">
+                                <div class="input-wrapper">
+                                    <span class="input-icon">💎</span>
+                                    <input type="number" id="topUpAmount" placeholder="Введите сумму" min="1" max="10000" value="">
+                                    <span class="input-currency">⭐</span>
+                                </div>
+                                <div class="input-hint">От 1 до 10,000 звезд</div>
+                            </div>
+                        </div>
+                        
+                        <div class="purchase-section">
+                            <button class="premium-purchase-btn" onclick="purchaseFromInput()">
+                                <div class="btn-content">
+                                    <span class="btn-icon">🚀</span>
+                                    <span class="btn-text">Пополнить баланс</span>
+                                </div>
+                                <div class="btn-shine"></div>
+                            </button>
+                            <div class="payment-info">
+                                <span class="payment-secure">🔒 Безопасная оплата через Telegram Stars</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -290,4 +334,4 @@
 
     <script src="script.js"></script>
 </body>
-</html>
+</html> я
