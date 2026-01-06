@@ -358,7 +358,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.8);
     z-index: 1000;
     backdrop-filter: blur(4px);
 }
@@ -373,8 +373,8 @@ body {
 .modal-content {
     background: var(--tg-theme-bg-color);
     border-radius: 20px;
-    width: 90%;
-    max-width: 380px;
+    width: 95%;
+    max-width: 420px;
     max-height: 90vh;
     overflow-y: auto;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -385,7 +385,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: 16px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -419,143 +419,304 @@ body {
     padding: 20px;
 }
 
-.rocket-container {
+/* Game Chart */
+.game-chart {
     position: relative;
-    height: 180px;
+    height: 200px;
     background: var(--tg-theme-secondary-bg-color);
     border-radius: 16px;
     margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.rocket {
-    width: 50px;
-    height: 50px;
-    transition: all 0.1s ease;
-    filter: brightness(1.1) drop-shadow(0 0 8px rgba(106, 179, 243, 0.3));
+#gameCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
-.rocket.flying {
-    animation: rocketFly 0.1s ease-in-out;
+.multiplier-display {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--game-gold);
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+    z-index: 10;
+}
+
+.rocket-plane {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    bottom: 20px;
+    left: 20px;
+    transition: all 0.1s ease;
+    z-index: 5;
+}
+
+.rocket-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(106, 179, 243, 0.5));
+}
+
+.rocket-plane.flying {
+    animation: rocketFly 0.1s ease-in-out infinite;
 }
 
 @keyframes rocketFly {
     0% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.05) rotate(3deg); }
+    50% { transform: scale(1.05) rotate(2deg); }
     100% { transform: scale(1) rotate(0deg); }
 }
 
-.multiplier {
+.game-status {
     position: absolute;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--game-gold);
-    text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+    top: 20px;
+    right: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tg-theme-hint-color);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 6px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
 }
 
-.crash-controls {
+/* Betting Panel */
+.betting-panel {
+    margin-bottom: 20px;
+}
+
+.bet-input-section {
     display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin-bottom: 16px;
 }
 
-.bet-section {
+.bet-group, .auto-cashout-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bet-group label, .auto-cashout-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tg-theme-hint-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bet-input-wrapper, .auto-input-wrapper {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
 }
 
-.bet-section label {
-    font-weight: 600;
-    color: var(--tg-theme-text-color);
-    font-size: 14px;
-}
-
-.bet-section input {
-    flex: 1;
-    padding: 12px;
+.bet-input-wrapper input, .auto-input-wrapper input {
+    width: 100%;
+    padding: 12px 32px 12px 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     background: var(--tg-theme-secondary-bg-color);
     color: var(--tg-theme-text-color);
     font-size: 16px;
-    text-align: center;
     font-weight: 600;
 }
 
-.bet-section input:focus {
+.bet-input-wrapper input:focus, .auto-input-wrapper input:focus {
     outline: none;
     border-color: var(--tg-theme-button-color);
 }
 
-.bet-section input::placeholder {
+.currency, .multiplier-suffix {
+    position: absolute;
+    right: 12px;
+    font-size: 14px;
     color: var(--tg-theme-hint-color);
+    pointer-events: none;
 }
 
-.crash-btn, .cashout-btn {
-    padding: 14px;
+/* Action Buttons */
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.bet-button, .cashout-button {
+    padding: 16px 12px;
     border: none;
     border-radius: 12px;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
 }
 
-.crash-btn {
+.bet-button {
     background: var(--tg-theme-button-color);
     color: var(--tg-theme-button-text-color);
 }
 
-.crash-btn:active:not(:disabled) {
+.bet-button:active:not(:disabled) {
     transform: scale(0.96);
 }
 
-.crash-btn:disabled {
+.bet-button:disabled {
     background: var(--tg-theme-hint-color);
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-.cashout-btn {
+.cashout-button {
     background: var(--game-warning);
     color: white;
 }
 
-.cashout-btn:disabled {
+.cashout-button:disabled {
     background: var(--tg-theme-secondary-bg-color);
     color: var(--tg-theme-hint-color);
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-.cashout-btn:active:not(:disabled) {
+.cashout-button:active:not(:disabled) {
     transform: scale(0.96);
 }
 
-.game-info-panel {
+.btn-text {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.btn-amount, .btn-multiplier {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* Game History */
+.game-history {
+    margin-bottom: 20px;
+}
+
+.history-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tg-theme-text-color);
+    margin-bottom: 8px;
+}
+
+.history-items {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.history-item {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
     background: var(--tg-theme-secondary-bg-color);
-    border-radius: 12px;
-    padding: 12px;
-    text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.last-crashes {
+.history-item.low {
+    color: var(--game-danger);
+    border-color: rgba(236, 57, 66, 0.3);
+}
+
+.history-item.medium {
+    color: var(--game-warning);
+    border-color: rgba(255, 152, 0, 0.3);
+}
+
+.history-item.high {
+    color: var(--game-success);
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+/* Players Section */
+.players-section {
+    background: var(--tg-theme-secondary-bg-color);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.players-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tg-theme-text-color);
+    margin-bottom: 12px;
+}
+
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.player-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.player-item:last-child {
+    border-bottom: none;
+}
+
+.player-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--tg-theme-text-color);
+    flex: 1;
+}
+
+.player-bet {
     font-size: 12px;
+    color: var(--tg-theme-hint-color);
+    margin-right: 12px;
+}
+
+.player-status {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    min-width: 50px;
+    text-align: center;
+}
+
+.player-status.waiting {
+    background: rgba(112, 132, 153, 0.2);
     color: var(--tg-theme-hint-color);
 }
 
-.crash-history {
-    font-weight: 600;
-    color: var(--tg-theme-accent-text-color);
+.player-status.cashed {
+    background: rgba(76, 175, 80, 0.2);
+    color: var(--game-success);
+}
+
+.player-status.crashed {
+    background: rgba(236, 57, 66, 0.2);
+    color: var(--game-danger);
 }
 
 /* Bottom Navigation */
