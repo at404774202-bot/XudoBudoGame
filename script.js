@@ -1,6 +1,4 @@
 // XudoBudoGame - Complete Telegram Mini App
-console.log('Loading XudoBudoGame...');
-
 // Telegram Web App initialization
 let tg = window.Telegram?.WebApp || {
     expand: () => console.log('TG: expand'),
@@ -66,12 +64,35 @@ function playSound(frequency, duration, type = 'sine', volume = 0.1) {
     }
 }
 
-function playButtonClick() { playSound(800, 0.1, 'square', 0.05); }
-function playRocketEngine() { if (soundEnabled && audioContext) playSound(150 + Math.random() * 50, 0.1, 'sawtooth', 0.03); }
-function playCrashSound() { playSound(200, 0.3, 'sawtooth', 0.1); setTimeout(() => playSound(100, 0.2, 'triangle', 0.08), 100); }
-function playCashoutSound() { playSound(600, 0.2, 'sine', 0.08); setTimeout(() => playSound(800, 0.15, 'sine', 0.06), 150); }
-function playSuccessSound() { playSound(523, 0.15, 'sine', 0.06); setTimeout(() => playSound(659, 0.15, 'sine', 0.06), 150); setTimeout(() => playSound(784, 0.2, 'sine', 0.08), 300); }
-function playErrorSound() { playSound(300, 0.2, 'sawtooth', 0.08); setTimeout(() => playSound(200, 0.3, 'sawtooth', 0.1), 200); }
+function playButtonClick() {
+    playSound(800, 0.1, 'square', 0.05);
+}
+
+function playRocketEngine() {
+    if (!soundEnabled || !audioContext) return;
+    playSound(150 + Math.random() * 50, 0.1, 'sawtooth', 0.03);
+}
+
+function playCrashSound() {
+    playSound(200, 0.3, 'sawtooth', 0.1);
+    setTimeout(() => playSound(100, 0.2, 'triangle', 0.08), 100);
+}
+
+function playCashoutSound() {
+    playSound(600, 0.2, 'sine', 0.08);
+    setTimeout(() => playSound(800, 0.15, 'sine', 0.06), 150);
+}
+
+function playSuccessSound() {
+    playSound(523, 0.15, 'sine', 0.06);
+    setTimeout(() => playSound(659, 0.15, 'sine', 0.06), 150);
+    setTimeout(() => playSound(784, 0.2, 'sine', 0.08), 300);
+}
+
+function playErrorSound() {
+    playSound(300, 0.2, 'sawtooth', 0.08);
+    setTimeout(() => playSound(200, 0.3, 'sawtooth', 0.1), 200);
+}
 
 function toggleSound() {
     soundEnabled = !soundEnabled;
@@ -139,17 +160,19 @@ let gameState = {
     gameInterval: null, gameStartTime: 0, canvas: null, ctx: null,
     curve: [], gameHistory: [5.67, 2.45, 1.23, 8.91, 1.05],
     stats: { gamesPlayed: 0, gamesWon: 0, totalWinnings: 0, bestMultiplier: 0 },
-    realPlayers: [], currentUser: null
+    realPlayers: [], // Реальные игроки в текущем раунде
+    currentUser: null // Данные текущего пользователя
 };
-
 // Real Players System
 function initializeCurrentUser() {
     gameState.currentUser = getUserData();
     
+    // Получаем аватар пользователя через Telegram API
     if (tg.initDataUnsafe?.user?.photo_url) {
         gameState.currentUser.photoUrl = tg.initDataUnsafe.user.photo_url;
     }
     
+    // Добавляем текущего пользователя в список игроков
     const currentPlayer = {
         id: gameState.currentUser.id,
         firstName: gameState.currentUser.firstName,
@@ -157,8 +180,11 @@ function initializeCurrentUser() {
         username: gameState.currentUser.username,
         photoUrl: gameState.currentUser.photoUrl,
         languageCode: gameState.currentUser.languageCode,
-        bet: 0, status: 'waiting', cashoutMultiplier: null,
-        isCurrentUser: true, joinTime: Date.now()
+        bet: 0,
+        status: 'waiting', // waiting, betting, cashed, crashed
+        cashoutMultiplier: null,
+        isCurrentUser: true,
+        joinTime: Date.now()
     };
     
     gameState.realPlayers = [currentPlayer];
@@ -173,7 +199,9 @@ function createRealPlayer(userData, betAmount = 0) {
         username: userData.username || `user${userData.id}`,
         photoUrl: userData.photoUrl || '',
         languageCode: userData.languageCode || 'ru',
-        bet: betAmount, status: 'waiting', cashoutMultiplier: null,
+        bet: betAmount,
+        status: 'waiting',
+        cashoutMultiplier: null,
         isCurrentUser: userData.id === gameState.currentUser?.id,
         joinTime: Date.now()
     };
@@ -188,6 +216,7 @@ function updateRealPlayersDisplay() {
     container.innerHTML = '';
     if (countEl) countEl.textContent = gameState.realPlayers.length;
     
+    // Сортируем игроков: текущий пользователь первым, затем по времени присоединения
     const sortedPlayers = [...gameState.realPlayers].sort((a, b) => {
         if (a.isCurrentUser) return -1;
         if (b.isCurrentUser) return 1;
@@ -198,6 +227,7 @@ function updateRealPlayersDisplay() {
         const item = document.createElement('div');
         item.className = `real-player-item ${player.isCurrentUser ? 'current-user' : ''}`;
         
+        // Определяем статус игрока
         let statusText = 'Ждет', statusClass = 'waiting';
         if (player.status === 'betting' && player.bet > 0) {
             statusText = `${player.bet} ⭐`;
@@ -210,6 +240,7 @@ function updateRealPlayersDisplay() {
             statusClass = 'crashed';
         }
         
+        // Создаем аватар
         const displayName = player.firstName + (player.lastName ? ` ${player.lastName}` : '');
         const initials = (player.firstName.charAt(0) + (player.lastName ? player.lastName.charAt(0) : '')).toUpperCase();
         
@@ -224,6 +255,7 @@ function updateRealPlayersDisplay() {
             avatarHtml = `<div class="real-player-avatar-placeholder">${initials}</div>`;
         }
         
+        // Определяем флаг страны по языку
         const countryFlags = {
             'ru': '🇷🇺', 'uk': '🇺🇦', 'be': '🇧🇾', 'kk': '🇰🇿', 'uz': '🇺🇿', 'ky': '🇰🇬',
             'en': '🇺🇸', 'de': '🇩🇪', 'fr': '🇫🇷', 'es': '🇪🇸', 'it': '🇮🇹'
@@ -248,19 +280,65 @@ function updateRealPlayersDisplay() {
     });
 }
 
+// Симуляция подключения других реальных игроков
 function simulateRealPlayersJoining() {
     const sampleUsers = [
-        { id: 987654321, firstName: 'Александр', lastName: 'Петров', username: 'alex_crypto', languageCode: 'ru', photoUrl: 'https://i.pravatar.cc/80?img=1' },
-        { id: 876543210, firstName: 'Maria', lastName: 'Smith', username: 'maria_trader', languageCode: 'en', photoUrl: 'https://i.pravatar.cc/80?img=2' },
-        { id: 765432109, firstName: 'Дмитрий', lastName: '', username: 'dmitry_win', languageCode: 'ru', photoUrl: 'https://i.pravatar.cc/80?img=3' },
-        { id: 654321098, firstName: 'Anna', lastName: 'Mueller', username: 'anna_lucky', languageCode: 'de', photoUrl: 'https://i.pravatar.cc/80?img=4' },
-        { id: 543210987, firstName: 'Сергей', lastName: 'Иванов', username: 'sergey_pro', languageCode: 'ru', photoUrl: 'https://i.pravatar.cc/80?img=5' },
-        { id: 432109876, firstName: 'Elena', lastName: 'Kowalski', username: 'elena_star', languageCode: 'uk', photoUrl: 'https://i.pravatar.cc/80?img=6' }
+        { 
+            id: 987654321, 
+            firstName: 'Александр', 
+            lastName: 'Петров', 
+            username: 'alex_crypto', 
+            languageCode: 'ru',
+            photoUrl: 'https://i.pravatar.cc/80?img=1'
+        },
+        { 
+            id: 876543210, 
+            firstName: 'Maria', 
+            lastName: 'Smith', 
+            username: 'maria_trader', 
+            languageCode: 'en',
+            photoUrl: 'https://i.pravatar.cc/80?img=2'
+        },
+        { 
+            id: 765432109, 
+            firstName: 'Дмитрий', 
+            lastName: '', 
+            username: 'dmitry_win', 
+            languageCode: 'ru',
+            photoUrl: 'https://i.pravatar.cc/80?img=3'
+        },
+        { 
+            id: 654321098, 
+            firstName: 'Anna', 
+            lastName: 'Mueller', 
+            username: 'anna_lucky', 
+            languageCode: 'de',
+            photoUrl: 'https://i.pravatar.cc/80?img=4'
+        },
+        { 
+            id: 543210987, 
+            firstName: 'Сергей', 
+            lastName: 'Иванов', 
+            username: 'sergey_pro', 
+            languageCode: 'ru',
+            photoUrl: 'https://i.pravatar.cc/80?img=5'
+        },
+        { 
+            id: 432109876, 
+            firstName: 'Elena', 
+            lastName: 'Kowalski', 
+            username: 'elena_star', 
+            languageCode: 'uk',
+            photoUrl: 'https://i.pravatar.cc/80?img=6'
+        }
     ];
     
+    // Добавляем игроков случайно
     setInterval(() => {
         if (gameState.realPlayers.length < 6 && Math.random() < 0.4) {
-            const availableUsers = sampleUsers.filter(u => !gameState.realPlayers.some(p => p.id === u.id));
+            const availableUsers = sampleUsers.filter(u => 
+                !gameState.realPlayers.some(p => p.id === u.id)
+            );
             
             if (availableUsers.length > 0) {
                 const randomUser = availableUsers[Math.floor(Math.random() * availableUsers.length)];
@@ -268,19 +346,21 @@ function simulateRealPlayersJoining() {
                 gameState.realPlayers.push(newPlayer);
                 updateRealPlayersDisplay();
                 
+                // Через некоторое время игрок делает ставку (если идет фаза ставок)
                 setTimeout(() => {
                     if (gameState.gamePhase === 'betting') {
                         const playerIndex = gameState.realPlayers.findIndex(p => p.id === randomUser.id);
-                        if (playerIndex !== -1 && Math.random() < 0.7) {
+                        if (playerIndex !== -1 && Math.random() < 0.7) { // 70% шанс что сделает ставку
                             gameState.realPlayers[playerIndex].bet = Math.floor(Math.random() * 800) + 50;
                             gameState.realPlayers[playerIndex].status = 'betting';
                             updateRealPlayersDisplay();
                         }
                     }
-                }, Math.random() * 4000 + 1000);
+                }, Math.random() * 4000 + 1000); // От 1 до 5 секунд
             }
         }
         
+        // Иногда игроки уходят (но не во время активной игры)
         if (gameState.realPlayers.length > 2 && Math.random() < 0.15 && gameState.gamePhase === 'waiting') {
             const nonCurrentPlayers = gameState.realPlayers.filter(p => !p.isCurrentUser);
             if (nonCurrentPlayers.length > 0) {
@@ -289,7 +369,7 @@ function simulateRealPlayersJoining() {
                 updateRealPlayersDisplay();
             }
         }
-    }, 8000);
+    }, 8000); // Каждые 8 секунд
 }
 
 function updateRealPlayersStatus() {
@@ -335,6 +415,7 @@ function showSection(sectionName) {
     document.getElementById(sectionName).classList.add('active');
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     
+    // Найти правильную навигационную кнопку
     if (sectionName === 'crash') {
         document.querySelector(`[onclick="showSection('games')"]`).classList.add('active');
     } else {
@@ -344,6 +425,7 @@ function showSection(sectionName) {
     
     if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
     
+    // Инициализация краш игры при переходе
     if (sectionName === 'crash') {
         initializeCrashGame();
     }
@@ -354,6 +436,7 @@ function initializeCrashGame() {
     initializeCanvas();
     updateGameDisplay();
     
+    // Инициализируем текущего пользователя если еще не сделали
     if (!gameState.currentUser) {
         initializeCurrentUser();
         simulateRealPlayersJoining();
@@ -408,6 +491,7 @@ function purchaseFromInput() {
 function purchaseStars(amount) {
     showNotification('🔄 Обработка платежа...');
     
+    // Реальная интеграция с Telegram Stars
     if (tg.openInvoice) {
         const invoiceUrl = `https://t.me/$invoice?start=XTR_${amount}_${Date.now()}`;
         tg.openInvoice(invoiceUrl, (result) => {
@@ -428,6 +512,7 @@ function purchaseStars(amount) {
             }
         });
     } else {
+        // Fallback для тестирования
         setTimeout(() => {
             gameState.balance += amount;
             updateBalance();
@@ -443,6 +528,7 @@ function purchaseStars(amount) {
     }
 }
 
+// Crash Game Functions
 function generateCrashPoint() {
     const rand = Math.random();
     if (rand < 0.33) return parseFloat((1.00 + Math.random() * 0.50).toFixed(2));
@@ -459,6 +545,7 @@ function startNewRound() {
     gameState.crashPoint = generateCrashPoint();
     gameState.hasBet = false;
     
+    // Сбрасываем статус всех игроков
     gameState.realPlayers.forEach(player => {
         if (player.isCurrentUser) {
             player.status = 'waiting';
@@ -522,6 +609,7 @@ function startFlying() {
         updateGameDisplay();
         updateRealPlayersStatus();
         
+        // Звук двигателя ракеты
         if (Math.random() < 0.3) playRocketEngine();
         
         if (gameState.multiplier >= gameState.crashPoint) crashGame();
@@ -532,23 +620,33 @@ function startFlying() {
 function updateMultiplier() {
     const timeElapsed = (Date.now() - gameState.gameStartTime) / 1000;
     
+    // Рост множителя как в pilotka - экспоненциальный с замедлением
     let baseSpeed = 0.01;
     
+    // Ускорение в начале (первые 3 секунды)
     if (timeElapsed < 3) {
         baseSpeed *= (1 + timeElapsed * 0.2);
     }
     
+    // Замедление после 10 секунд
     if (timeElapsed > 10) {
         baseSpeed *= Math.max(0.3, 1 - (timeElapsed - 10) * 0.05);
     }
     
-    const randomFactor = 0.7 + Math.random() * 0.6;
+    // Случайные колебания как в pilotka
+    const randomFactor = 0.7 + Math.random() * 0.6; // от 0.7 до 1.3
+    
+    // Финальная скорость роста
     const increment = baseSpeed * randomFactor;
     
+    // Обновляем множитель
     gameState.multiplier += increment;
+    
+    // Ограничиваем максимальным значением краша
     gameState.multiplier = Math.min(gameState.multiplier, gameState.crashPoint);
     
-    if (Math.random() < 0.02) {
+    // Добавляем небольшие "скачки" как в pilotka
+    if (Math.random() < 0.02) { // 2% шанс на скачок
         gameState.multiplier += 0.01 + Math.random() * 0.03;
         gameState.multiplier = Math.min(gameState.multiplier, gameState.crashPoint);
     }
@@ -558,25 +656,33 @@ function updateRocketPosition() {
     const rocket = document.getElementById('rocketPlane');
     if (!rocket || !gameState.canvas) return;
     
+    const canvasRect = gameState.canvas.getBoundingClientRect();
     const containerRect = gameState.canvas.parentElement.getBoundingClientRect();
     
+    // Позиция как в pilotka - диагональное движение вверх
     const progress = Math.min((gameState.multiplier - 1) / (Math.max(gameState.crashPoint, 5) - 1), 1);
     
+    // Горизонтальное движение (слева направо)
     const maxX = containerRect.width - 60;
-    const x = 40 + (maxX - 40) * progress * 0.7;
+    const x = 40 + (maxX - 40) * progress * 0.7; // 70% от ширины
     
+    // Вертикальное движение (снизу вверх) - логарифмическая шкала как в pilotka
     const maxY = containerRect.height - 40;
     const minY = 20;
-    const logProgress = Math.log(1 + progress * 9) / Math.log(10);
+    const logProgress = Math.log(1 + progress * 9) / Math.log(10); // логарифмическая шкала
     const y = maxY - (maxY - minY) * logProgress;
     
+    // Поворот ракеты в зависимости от скорости роста множителя
     const rotationAngle = Math.min(progress * 15 + (gameState.multiplier > 3 ? 5 : 0), 25);
+    
+    // Масштаб в зависимости от множителя
     const scale = 1 + Math.min(progress * 0.3, 0.5);
     
     rocket.style.left = `${x}px`;
     rocket.style.top = `${y}px`;
     rocket.style.transform = `rotate(${rotationAngle}deg) scale(${scale})`;
     
+    // Эффекты для высоких множителей
     if (gameState.multiplier > 5) {
         rocket.classList.add('high-multiplier');
         rocket.style.filter = `brightness(${1.5 + Math.sin(Date.now() * 0.01) * 0.3}) drop-shadow(0 0 ${15 + Math.sin(Date.now() * 0.02) * 5}px rgba(255, 215, 0, 0.8))`;
@@ -602,7 +708,6 @@ function initializeCanvas() {
     gameState.canvas.style.height = '200px';
     drawChart();
 }
-
 function drawChart() {
     if (!gameState.ctx || !gameState.canvas) return;
     
@@ -610,8 +715,10 @@ function drawChart() {
     const width = gameState.canvas.style.width ? parseInt(gameState.canvas.style.width) : gameState.canvas.width;
     const height = gameState.canvas.style.height ? parseInt(gameState.canvas.style.height) : gameState.canvas.height;
     
+    // Очищаем canvas
     ctx.clearRect(0, 0, width, height);
     
+    // Фон с градиентом
     const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
     bgGradient.addColorStop(0, 'rgba(23, 33, 43, 0.1)');
     bgGradient.addColorStop(1, 'rgba(35, 46, 60, 0.3)');
@@ -619,6 +726,7 @@ function drawChart() {
     ctx.fillRect(0, 0, width, height);
     
     if (gameState.gamePhase === 'flying' && gameState.curve.length > 1) {
+        // Рисуем кривую роста множителя
         const gradient = ctx.createLinearGradient(0, height, 0, 0);
         gradient.addColorStop(0, 'rgba(106, 179, 243, 0.1)');
         gradient.addColorStop(0.5, 'rgba(106, 179, 243, 0.3)');
@@ -638,6 +746,7 @@ function drawChart() {
         ctx.fillStyle = gradient;
         ctx.fill();
         
+        // Рисуем линию
         ctx.beginPath();
         gameState.curve.forEach((point, index) => {
             const x = (index / gameState.curve.length) * width;
@@ -653,6 +762,7 @@ function drawChart() {
         ctx.stroke();
     }
     
+    // Добавляем текущую точку в кривую
     if (gameState.gamePhase === 'flying') {
         gameState.curve.push(gameState.multiplier);
         if (gameState.curve.length > 100) {
@@ -662,10 +772,12 @@ function drawChart() {
 }
 
 function updateGameDisplay() {
+    // Обновляем отображение множителя
     const multiplierEl = document.getElementById('multiplierDisplay');
     if (multiplierEl) {
         multiplierEl.textContent = `${gameState.multiplier.toFixed(2)}x`;
         
+        // Цветовые эффекты в зависимости от множителя
         if (gameState.multiplier >= 10) {
             multiplierEl.style.color = '#FFD700';
             multiplierEl.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.8)';
@@ -681,6 +793,7 @@ function updateGameDisplay() {
         }
     }
     
+    // Обновляем кнопки
     updateBetButton();
     updateCashoutButton();
     updateBalance();
@@ -760,11 +873,13 @@ function placeBet() {
         return showNotification('⚠️ Минимальный авто-вывод: 1.01x');
     }
     
+    // Делаем ставку
     gameState.balance -= betAmount;
     gameState.currentBet = betAmount;
     gameState.autoCashout = autoCashout;
     gameState.hasBet = true;
     
+    // Обновляем статус текущего игрока
     const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
     if (currentPlayer) {
         currentPlayer.bet = betAmount;
@@ -787,11 +902,13 @@ function cashOut() {
     const winAmount = Math.floor(gameState.currentBet * gameState.multiplier);
     gameState.balance += winAmount;
     
+    // Обновляем статистику
     gameState.stats.gamesPlayed++;
     gameState.stats.gamesWon++;
     gameState.stats.totalWinnings += winAmount - gameState.currentBet;
     gameState.stats.bestMultiplier = Math.max(gameState.stats.bestMultiplier, gameState.multiplier);
     
+    // Обновляем статус текущего игрока
     const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
     if (currentPlayer) {
         currentPlayer.status = 'cashed';
@@ -823,9 +940,11 @@ function crashGame() {
         rocket.classList.add('crashed');
     }
     
+    // Если у игрока была ставка и он не успел забрать
     if (gameState.hasBet) {
         gameState.stats.gamesPlayed++;
         
+        // Обновляем статус текущего игрока
         const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
         if (currentPlayer) {
             currentPlayer.status = 'crashed';
@@ -841,12 +960,14 @@ function crashGame() {
         playCrashSound();
     }
     
+    // Обновляем статус всех игроков которые не успели забрать
     gameState.realPlayers.forEach(player => {
         if (player.status === 'betting') {
             player.status = 'crashed';
         }
     });
     
+    // Добавляем в историю
     gameState.gameHistory.unshift(gameState.crashPoint);
     if (gameState.gameHistory.length > 10) gameState.gameHistory.pop();
     updateGameHistory();
@@ -855,6 +976,7 @@ function crashGame() {
     updateRealPlayersDisplay();
     saveGameStats();
     
+    // Начинаем новый раунд через 3 секунды
     setTimeout(() => {
         startNewRound();
     }, 3000);
@@ -870,6 +992,7 @@ function updateGameHistory() {
         item.className = 'history-item';
         item.textContent = `${multiplier.toFixed(2)}x`;
         
+        // Определяем класс по значению множителя
         if (multiplier < 2) {
             item.classList.add('low');
         } else if (multiplier < 5) {
@@ -882,6 +1005,7 @@ function updateGameHistory() {
     });
 }
 
+// Promo Code Functions
 function openPromoModal() {
     playButtonClick();
     document.getElementById('promoModal').classList.add('active');
@@ -907,24 +1031,34 @@ function activatePromoCode() {
         return showNotification('⚠️ Введите промокод!');
     }
     
+    // Проверяем, не использовался ли уже этот промокод
     const usedPromos = JSON.parse(localStorage.getItem('xudobudo_promos') || '[]');
     if (usedPromos.includes(code)) {
         playErrorSound();
         return showNotification('⚠️ Промокод уже использован!');
     }
     
+    // Список валидных промокодов
     const validPromos = {
-        'WELCOME': 100, 'START': 50, 'BONUS': 200, 'LUCKY': 150,
-        'WIN': 75, 'GAME': 125, 'STAR': 300, 'ROCKET': 250
+        'WELCOME': 100,
+        'START': 50,
+        'BONUS': 200,
+        'LUCKY': 150,
+        'WIN': 75,
+        'GAME': 125,
+        'STAR': 300,
+        'ROCKET': 250
     };
     
     if (validPromos[code]) {
         const reward = validPromos[code];
         gameState.balance += reward;
         
+        // Сохраняем использованный промокод
         usedPromos.push(code);
         localStorage.setItem('xudobudo_promos', JSON.stringify(usedPromos));
         
+        // Добавляем в отображение
         addActivatedPromo(code, reward);
         
         input.value = '';
@@ -945,6 +1079,7 @@ function addActivatedPromo(code, reward) {
     const container = document.getElementById('activatedPromos');
     if (!container) return;
     
+    // Удаляем сообщение "нет промокодов"
     const noPromos = container.querySelector('.no-promos');
     if (noPromos) noPromos.remove();
     
@@ -972,7 +1107,9 @@ function loadActivatedPromos() {
     });
 }
 
+// Notification System
 function showNotification(message) {
+    // Удаляем предыдущие уведомления
     const existing = document.querySelectorAll('.notification');
     existing.forEach(n => n.remove());
     
@@ -982,12 +1119,14 @@ function showNotification(message) {
     
     document.body.appendChild(notification);
     
+    // Автоматически удаляем через 3 секунды
     setTimeout(() => {
         notification.style.animation = 'slideUp 0.4s ease-out forwards';
         setTimeout(() => notification.remove(), 400);
     }, 3000);
 }
 
+// Input Handlers
 function setupInputHandlers() {
     const betAmountInput = document.getElementById('betAmount');
     const autoCashoutInput = document.getElementById('autoCashout');
@@ -1012,6 +1151,7 @@ function setupInputHandlers() {
     }
 }
 
+// Profile Functions
 function updateProfileStats() {
     const gamesEl = document.getElementById('profileGames');
     const winsEl = document.getElementById('profileWins');
@@ -1020,11 +1160,13 @@ function updateProfileStats() {
     if (winsEl) winsEl.textContent = gameState.stats.gamesWon;
 }
 
+// Initialization
 function initializeApp() {
     tg.expand();
     tg.ready();
     applyTelegramTheme();
     
+    // Инициализируем аудио контекст при первом взаимодействии
     document.addEventListener('click', initAudioContext, { once: true });
     document.addEventListener('touchstart', initAudioContext, { once: true });
     
@@ -1036,23 +1178,27 @@ function initializeApp() {
     updateProfileStats();
     updateGameHistory();
     
+    // Показываем секцию игр по умолчанию
     showSection('games');
     
     console.log('XudoBudoGame initialized successfully!');
 }
 
+// Запускаем приложение когда DOM готов
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
     initializeApp();
 }
 
+// Обработка изменения размера окна
 window.addEventListener('resize', () => {
     if (gameState.canvas) {
         setTimeout(initializeCanvas, 100);
     }
 });
 
+// Предотвращение случайного закрытия
 window.addEventListener('beforeunload', (e) => {
     if (gameState.hasBet && gameState.gamePhase === 'flying') {
         e.preventDefault();
@@ -1060,10 +1206,13 @@ window.addEventListener('beforeunload', (e) => {
     }
 });
 
+// Обработка видимости страницы
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
+        // Страница скрыта - можно приостановить некритичные операции
         console.log('App hidden');
     } else {
+        // Страница видима - возобновляем операции
         console.log('App visible');
         if (gameState.canvas) {
             initializeCanvas();
