@@ -294,7 +294,7 @@ function updateRealPlayersStatus() {
             player.cashoutMultiplier = gameState.multiplier.toFixed(2);
         }
     });
-    updateRealPlayersDisplay();
+    updateCrashPlayersDisplay();
 }
 
 function applyTelegramTheme() {
@@ -346,10 +346,10 @@ function showSection(sectionName) {
     }
 }
 
-// Crash Game Functions
+// MODERN CRASH GAME FUNCTIONS
 function initializeCrashGame() {
     initializeCanvas();
-    updateGameDisplay();
+    updateModernGameDisplay();
     
     // Инициализируем текущего пользователя если еще не сделали
     if (!gameState.currentUser) {
@@ -357,7 +357,334 @@ function initializeCrashGame() {
         simulateRealPlayersJoining();
     }
     
+    // Показываем современный интерфейс
+    const modernGame = document.querySelector('.crash-game-modern');
+    if (modernGame) {
+        modernGame.classList.add('active');
+    }
+    
+    // Инициализируем вкладки
+    initializeTabs();
+    
     if (gameState.gamePhase === 'waiting') startNewRound();
+}
+
+function initializeTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            playButtonClick();
+            
+            // Убираем активные классы
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            // Добавляем активный класс
+            btn.classList.add('active');
+            const targetTab = btn.getAttribute('data-tab');
+            const targetContent = document.getElementById(`${targetTab}-tab`);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+        });
+    });
+}
+
+function updateModernGameDisplay() {
+    // Обновляем множитель
+    const multiplierEl = document.getElementById('crashMultiplier');
+    if (multiplierEl) {
+        multiplierEl.textContent = `${gameState.multiplier.toFixed(2)}x`;
+        
+        // Цветовые эффекты в зависимости от множителя
+        if (gameState.multiplier >= 10) {
+            multiplierEl.style.color = '#FFD700';
+            multiplierEl.style.textShadow = '0 0 40px rgba(255, 215, 0, 1)';
+        } else if (gameState.multiplier >= 5) {
+            multiplierEl.style.color = '#4CAF50';
+            multiplierEl.style.textShadow = '0 0 35px rgba(76, 175, 80, 0.8)';
+        } else if (gameState.multiplier >= 2) {
+            multiplierEl.style.color = '#FF9800';
+            multiplierEl.style.textShadow = '0 0 30px rgba(255, 152, 0, 0.7)';
+        } else {
+            multiplierEl.style.color = '#ff6b35';
+            multiplierEl.style.textShadow = '0 0 30px rgba(255, 107, 53, 0.8)';
+        }
+    }
+    
+    // Обновляем статус игры
+    const statusEl = document.getElementById('crashStatusText');
+    const timerEl = document.getElementById('crashTimer');
+    
+    if (statusEl) {
+        if (gameState.gamePhase === 'betting') {
+            statusEl.textContent = 'Прием ставок';
+        } else if (gameState.gamePhase === 'flying') {
+            statusEl.textContent = 'Ракета летит!';
+        } else if (gameState.gamePhase === 'crashed') {
+            statusEl.textContent = `Краш на ${gameState.crashPoint.toFixed(2)}x`;
+        } else {
+            statusEl.textContent = 'Ожидание игроков';
+        }
+    }
+    
+    // Обновляем баланс
+    const balanceEl = document.getElementById('crashBalance');
+    if (balanceEl) balanceEl.textContent = gameState.balance.toLocaleString();
+    
+    // Обновляем кнопки
+    updateModernBetButton();
+    updateModernCashoutButton();
+}
+
+function updateModernBetButton() {
+    const betBtn = document.getElementById('crashBetBtn');
+    const betAmountInput = document.getElementById('betAmountInput');
+    
+    if (!betBtn || !betAmountInput) return;
+    
+    const amount = parseInt(betAmountInput.value) || 100;
+    const amountSpan = betBtn.querySelector('.btn-amount');
+    if (amountSpan) amountSpan.textContent = `${amount} ⭐`;
+    
+    if (gameState.gamePhase === 'betting' && !gameState.hasBet) {
+        betBtn.disabled = false;
+        betBtn.style.opacity = '1';
+    } else {
+        betBtn.disabled = true;
+        betBtn.style.opacity = '0.5';
+    }
+}
+
+function updateModernCashoutButton() {
+    const cashoutBtn = document.getElementById('crashCashoutBtn');
+    if (!cashoutBtn) return;
+    
+    const amountSpan = cashoutBtn.querySelector('.btn-amount');
+    if (amountSpan && gameState.hasBet) {
+        const winAmount = Math.floor(gameState.currentBet * gameState.multiplier);
+        amountSpan.textContent = `${winAmount} ⭐`;
+    }
+    
+    if (gameState.gamePhase === 'flying' && gameState.hasBet) {
+        cashoutBtn.disabled = false;
+        cashoutBtn.style.opacity = '1';
+    } else {
+        cashoutBtn.disabled = true;
+        cashoutBtn.style.opacity = '0.5';
+    }
+}
+
+function placeCrashBet() {
+    playButtonClick();
+    
+    if (gameState.gamePhase !== 'betting' || gameState.hasBet) return;
+    
+    const betAmountInput = document.getElementById('betAmountInput');
+    if (!betAmountInput) return;
+    
+    const betAmount = parseInt(betAmountInput.value) || 100;
+    
+    if (betAmount < 1) {
+        playErrorSound();
+        return showNotification('⚠️ Минимальная ставка: 1 ⭐');
+    }
+    
+    if (betAmount > gameState.balance) {
+        playErrorSound();
+        return showNotification('⚠️ Недостаточно средств!');
+    }
+    
+    // Делаем ставку
+    gameState.balance -= betAmount;
+    gameState.currentBet = betAmount;
+    gameState.autoCashout = parseFloat(document.getElementById('autoCashoutInput').value) || 2.00;
+    gameState.hasBet = true;
+    
+    // Обновляем статус текущего игрока
+    const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
+    if (currentPlayer) {
+        currentPlayer.bet = betAmount;
+        currentPlayer.status = 'betting';
+    }
+    
+    updateModernGameDisplay();
+    updateCrashPlayersDisplay();
+    saveGameStats();
+    
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    showNotification(`✅ Ставка ${betAmount} ⭐ принята!`);
+}
+
+function crashCashout() {
+    playButtonClick();
+    
+    if (!gameState.hasBet || gameState.gamePhase !== 'flying') return;
+    
+    const winAmount = Math.floor(gameState.currentBet * gameState.multiplier);
+    gameState.balance += winAmount;
+    
+    // Обновляем статистику
+    gameState.stats.gamesPlayed++;
+    gameState.stats.gamesWon++;
+    gameState.stats.totalWinnings += winAmount - gameState.currentBet;
+    gameState.stats.bestMultiplier = Math.max(gameState.stats.bestMultiplier, gameState.multiplier);
+    
+    // Обновляем статус текущего игрока
+    const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
+    if (currentPlayer) {
+        currentPlayer.status = 'cashed';
+        currentPlayer.cashoutMultiplier = gameState.multiplier.toFixed(2);
+    }
+    
+    gameState.hasBet = false;
+    gameState.currentBet = 0;
+    
+    updateModernGameDisplay();
+    updateCrashPlayersDisplay();
+    saveGameStats();
+    
+    playCashoutSound();
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    showNotification(`🎉 Выигрыш: ${winAmount} ⭐ (${gameState.multiplier.toFixed(2)}x)`);
+}
+
+function updateCrashPlayersDisplay() {
+    const container = document.getElementById('crashPlayersList');
+    const countEl = document.getElementById('crashOnlineCount');
+    
+    if (!container) return;
+    
+    container.innerHTML = '';
+    if (countEl) countEl.textContent = gameState.realPlayers.length;
+    
+    // Сортируем игроков: текущий пользователь первым, затем по времени присоединения
+    const sortedPlayers = [...gameState.realPlayers].sort((a, b) => {
+        if (a.isCurrentUser) return -1;
+        if (b.isCurrentUser) return 1;
+        return a.joinTime - b.joinTime;
+    });
+    
+    sortedPlayers.forEach(player => {
+        const item = document.createElement('div');
+        item.className = `real-player-item ${player.isCurrentUser ? 'current-user' : ''}`;
+        
+        // Определяем статус игрока
+        let statusText = 'Ждет', statusClass = 'waiting';
+        if (player.status === 'betting' && player.bet > 0) {
+            statusText = `${player.bet} ⭐`;
+            statusClass = 'betting';
+        } else if (player.status === 'cashed') {
+            statusText = `${player.cashoutMultiplier}x`;
+            statusClass = 'cashed';
+        } else if (player.status === 'crashed') {
+            statusText = 'Краш';
+            statusClass = 'crashed';
+        }
+        
+        // Создаем аватар
+        const displayName = player.firstName + (player.lastName ? ` ${player.lastName}` : '');
+        const initials = (player.firstName.charAt(0) + (player.lastName ? player.lastName.charAt(0) : '')).toUpperCase();
+        
+        let avatarHtml = '';
+        if (player.photoUrl) {
+            avatarHtml = `
+                <img src="${player.photoUrl}" alt="${displayName}" class="real-player-avatar" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="real-player-avatar-placeholder" style="display:none;">${initials}</div>
+            `;
+        } else {
+            avatarHtml = `<div class="real-player-avatar-placeholder">${initials}</div>`;
+        }
+        
+        // Определяем флаг страны по языку
+        const countryFlags = {
+            'ru': '🇷🇺', 'uk': '🇺🇦', 'be': '🇧🇾', 'kk': '🇰🇿', 'uz': '🇺🇿', 'ky': '🇰🇬',
+            'en': '🇺🇸', 'de': '🇩🇪', 'fr': '🇫🇷', 'es': '🇪🇸', 'it': '🇮🇹'
+        };
+        const countryFlag = countryFlags[player.languageCode] || countryFlags['ru'];
+        
+        item.innerHTML = `
+            <div class="real-player-avatar-container">
+                ${avatarHtml}
+                <div class="country-flag">${countryFlag}</div>
+            </div>
+            <div class="real-player-info">
+                <div class="real-player-name">${displayName}</div>
+                <div class="real-player-username">@${player.username}</div>
+            </div>
+            <div class="real-player-status">
+                <span class="player-status ${statusClass}">${statusText}</span>
+            </div>
+        `;
+        
+        container.appendChild(item);
+    });
+}
+
+function updateCrashHistory() {
+    const historyEl = document.getElementById('crashHistory');
+    if (!historyEl) return;
+    
+    historyEl.innerHTML = '';
+    gameState.gameHistory.forEach(multiplier => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.textContent = `${multiplier.toFixed(2)}x`;
+        
+        // Определяем класс по значению множителя
+        if (multiplier < 2) {
+            item.classList.add('low');
+        } else if (multiplier < 5) {
+            item.classList.add('medium');
+        } else {
+            item.classList.add('high');
+        }
+        
+        historyEl.appendChild(item);
+    });
+}
+
+// Функции для управления ставками
+function adjustBet(amount) {
+    playButtonClick();
+    const input = document.getElementById('betAmountInput');
+    if (!input) return;
+    
+    let currentValue = parseInt(input.value) || 100;
+    let newValue = currentValue + amount;
+    
+    if (newValue < 1) newValue = 1;
+    if (newValue > gameState.balance) newValue = gameState.balance;
+    
+    input.value = newValue;
+    updateModernBetButton();
+}
+
+function adjustCashout(amount) {
+    playButtonClick();
+    const input = document.getElementById('autoCashoutInput');
+    if (!input) return;
+    
+    let currentValue = parseFloat(input.value) || 2.00;
+    let newValue = currentValue + amount;
+    
+    if (newValue < 1.01) newValue = 1.01;
+    if (newValue > 1000) newValue = 1000;
+    
+    input.value = newValue.toFixed(2);
+}
+
+function setQuickBet(amount) {
+    playButtonClick();
+    const input = document.getElementById('betAmountInput');
+    if (input) {
+        input.value = amount;
+        updateModernBetButton();
+    }
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 }
 
 // Top Up Functions
@@ -472,25 +799,25 @@ function startNewRound() {
             player.cashoutMultiplier = null;
         }
     });
-    updateRealPlayersDisplay();
+    updateCrashPlayersDisplay();
     
     const rocket = document.getElementById('rocketPlane');
     if (rocket) {
         rocket.classList.remove('flying', 'crashed', 'high-multiplier');
         rocket.style.left = '40px';
-        rocket.style.top = '80%';
+        rocket.style.bottom = '20%';
         rocket.style.transform = 'rotate(0deg) scale(1)';
         rocket.style.filter = 'brightness(1.1) drop-shadow(0 0 6px rgba(106, 179, 243, 0.6))';
     }
     
-    updateGameDisplay();
+    updateModernGameDisplay();
     let countdown = 5;
-    const statusEl = document.getElementById('gameStatus');
-    if (statusEl) statusEl.textContent = `Ставки: ${countdown}с`;
+    const timerEl = document.getElementById('crashTimer');
+    if (timerEl) timerEl.textContent = countdown;
     
     const interval = setInterval(() => {
         countdown--;
-        if (statusEl) statusEl.textContent = `Ставки: ${countdown}с`;
+        if (timerEl) timerEl.textContent = countdown;
         if (countdown <= 0) {
             clearInterval(interval);
             startFlying();
@@ -503,14 +830,14 @@ function startFlying() {
     gameState.multiplier = 1.00;
     gameState.gameStartTime = Date.now();
     
-    const statusEl = document.getElementById('gameStatus');
-    if (statusEl) statusEl.textContent = 'УЛЕТЕЛ!';
+    const timerEl = document.getElementById('crashTimer');
+    if (timerEl) timerEl.textContent = '🚀';
     
-    const betBtn = document.getElementById('betBtn');
+    const betBtn = document.getElementById('crashBetBtn');
     if (betBtn) betBtn.disabled = true;
     
     if (gameState.hasBet) {
-        const cashoutBtn = document.getElementById('cashoutBtn');
+        const cashoutBtn = document.getElementById('crashCashoutBtn');
         if (cashoutBtn) cashoutBtn.disabled = false;
     }
     
@@ -521,13 +848,11 @@ function startFlying() {
         updateMultiplier();
         updateRocketPosition();
         drawChart();
-        updateGameDisplay();
+        updateModernGameDisplay();
         updateRealPlayersStatus();
         
-        // УБРАЛИ ЗВУК РАКЕТЫ - больше не играет во время полета
-        
         if (gameState.multiplier >= gameState.crashPoint) crashGame();
-        if (gameState.hasBet && gameState.autoCashout > 0 && gameState.multiplier >= gameState.autoCashout) cashOut();
+        if (gameState.hasBet && gameState.autoCashout > 0 && gameState.multiplier >= gameState.autoCashout) crashCashout();
     }, 100);
 }
 
@@ -577,8 +902,8 @@ function updateRocketPosition() {
     const rocket = document.getElementById('rocketPlane');
     if (!rocket) return;
     
-    // PILOTKA STYLE ROCKET MOVEMENT
-    const gameArea = document.querySelector('.pilotka-game-area');
+    // MODERN INTERFACE ROCKET MOVEMENT
+    const gameArea = document.querySelector('.chart-container');
     if (!gameArea) return;
     
     const containerRect = gameArea.getBoundingClientRect();
@@ -722,8 +1047,8 @@ function drawChart() {
 }
 
 function updateGameDisplay() {
-    // Обновляем pilotka интерфейс
-    updatePilotkaDisplay();
+    // Обновляем современный интерфейс
+    updateModernGameDisplay();
     
     // Обновляем обычный интерфейс (для совместимости)
     const multiplierEl = document.getElementById('multiplierDisplay');
@@ -877,8 +1202,8 @@ function crashGame() {
     clearInterval(gameState.gameInterval);
     gameState.gamePhase = 'crashed';
     
-    const statusEl = document.getElementById('gameStatus');
-    if (statusEl) statusEl.textContent = `Краш на ${gameState.crashPoint.toFixed(2)}x`;
+    const timerEl = document.getElementById('crashTimer');
+    if (timerEl) timerEl.textContent = '💥';
     
     const rocket = document.getElementById('rocketPlane');
     if (rocket) {
@@ -916,10 +1241,10 @@ function crashGame() {
     // Добавляем в историю
     gameState.gameHistory.unshift(gameState.crashPoint);
     if (gameState.gameHistory.length > 10) gameState.gameHistory.pop();
-    updateGameHistory();
+    updateCrashHistory();
     
-    updateGameDisplay();
-    updateRealPlayersDisplay();
+    updateModernGameDisplay();
+    updateCrashPlayersDisplay();
     saveGameStats();
     
     // Начинаем новый раунд через 3 секунды
@@ -1072,40 +1397,6 @@ function showNotification(message) {
     }, 3000);
 }
 
-// Input Handlers
-function setupInputHandlers() {
-    const betAmountInput = document.getElementById('betAmount');
-    const autoCashoutInput = document.getElementById('autoCashout');
-    
-    if (betAmountInput) {
-        betAmountInput.addEventListener('input', () => {
-            let value = parseInt(betAmountInput.value) || 0;
-            if (value < 1) value = 1;
-            if (value > gameState.balance) value = gameState.balance;
-            betAmountInput.value = value;
-            updateBetButton();
-        });
-    }
-    
-    if (autoCashoutInput) {
-        autoCashoutInput.addEventListener('input', () => {
-            let value = parseFloat(autoCashoutInput.value) || 1.01;
-            if (value < 1.01) value = 1.01;
-            if (value > 1000) value = 1000;
-            autoCashoutInput.value = value.toFixed(2);
-        });
-    }
-}
-
-// Profile Functions
-function updateProfileStats() {
-    const gamesEl = document.getElementById('profileGames');
-    const winsEl = document.getElementById('profileWins');
-    
-    if (gamesEl) gamesEl.textContent = gameState.stats.gamesPlayed;
-    if (winsEl) winsEl.textContent = gameState.stats.gamesWon;
-}
-
 // Initialization
 function initializeApp() {
     tg.expand();
@@ -1122,12 +1413,60 @@ function initializeApp() {
     setupInputHandlers();
     updateBalance();
     updateProfileStats();
-    updateGameHistory();
+    updateCrashHistory();
     
     // Показываем секцию игр по умолчанию
     showSection('games');
     
     console.log('XudoBudoGame initialized successfully!');
+}
+
+// Input Handlers для современного интерфейса
+function setupInputHandlers() {
+    const betAmountInput = document.getElementById('betAmountInput');
+    const autoCashoutInput = document.getElementById('autoCashoutInput');
+    
+    if (betAmountInput) {
+        betAmountInput.addEventListener('input', () => {
+            let value = parseInt(betAmountInput.value) || 0;
+            if (value < 1) value = 1;
+            if (value > gameState.balance) value = gameState.balance;
+            betAmountInput.value = value;
+            updateModernBetButton();
+        });
+    }
+    
+    if (autoCashoutInput) {
+        autoCashoutInput.addEventListener('input', () => {
+            let value = parseFloat(autoCashoutInput.value) || 1.01;
+            if (value < 1.01) value = 1.01;
+            if (value > 1000) value = 1000;
+            autoCashoutInput.value = value.toFixed(2);
+        });
+    }
+    
+    // Обработчики для старого интерфейса (совместимость)
+    const oldBetAmountInput = document.getElementById('betAmount');
+    const oldAutoCashoutInput = document.getElementById('autoCashout');
+    
+    if (oldBetAmountInput) {
+        oldBetAmountInput.addEventListener('input', () => {
+            let value = parseInt(oldBetAmountInput.value) || 0;
+            if (value < 1) value = 1;
+            if (value > gameState.balance) value = gameState.balance;
+            oldBetAmountInput.value = value;
+            updateBetButton();
+        });
+    }
+    
+    if (oldAutoCashoutInput) {
+        oldAutoCashoutInput.addEventListener('input', () => {
+            let value = parseFloat(oldAutoCashoutInput.value) || 1.01;
+            if (value < 1.01) value = 1.01;
+            if (value > 1000) value = 1000;
+            oldAutoCashoutInput.value = value.toFixed(2);
+        });
+    }
 }
 
 // Запускаем приложение когда DOM готов
@@ -1453,3 +1792,41 @@ function crashGame() {
 }
 
 console.log('Pilotka interface functions loaded!');
+
+// Запускаем приложение когда DOM готов
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    initializeApp();
+}
+
+// Обработка изменения размера окна
+window.addEventListener('resize', () => {
+    if (gameState.canvas) {
+        setTimeout(initializeCanvas, 100);
+    }
+});
+
+// Предотвращение случайного закрытия
+window.addEventListener('beforeunload', (e) => {
+    if (gameState.hasBet && gameState.gamePhase === 'flying') {
+        e.preventDefault();
+        e.returnValue = 'У вас есть активная ставка! Вы уверены, что хотите покинуть игру?';
+    }
+});
+
+// Обработка видимости страницы
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        // Страница скрыта - можно приостановить некритичные операции
+        console.log('App hidden');
+    } else {
+        // Страница видима - возобновляем операции
+        console.log('App visible');
+        if (gameState.canvas) {
+            initializeCanvas();
+        }
+    }
+});
+
+console.log('XudoBudoGame script loaded successfully!');
