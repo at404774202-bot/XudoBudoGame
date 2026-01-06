@@ -570,20 +570,13 @@ function startNewRound() {
     const rocket = document.getElementById('rocketPlane');
     if (rocket) {
         // Убираем все классы анимации
-        rocket.classList.remove('flying', 'crashed', 'high-multiplier');
+        rocket.classList.remove('flying', 'crashed');
         
         // Сбрасываем позицию в начальную точку
         rocket.style.left = '40px';
         rocket.style.bottom = '40px';
-        rocket.style.transform = 'rotate(0deg) scale(1)';
+        rocket.style.transform = 'rotate(0deg)';
         rocket.style.filter = 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 107, 53, 0.6))';
-        
-        // Скрываем эффекты
-        const trail = rocket.querySelector('.rocket-trail');
-        if (trail) trail.style.opacity = '0';
-        
-        const glow = rocket.querySelector('.rocket-glow');
-        if (glow) glow.style.opacity = '0';
     }
     
     updateModernGameDisplay();
@@ -621,13 +614,6 @@ function startFlying() {
     const rocket = document.getElementById('rocketPlane');
     if (rocket) {
         rocket.classList.add('flying');
-        
-        // Показываем эффекты
-        const trail = rocket.querySelector('.rocket-trail');
-        if (trail) trail.style.opacity = '0.7';
-        
-        const glow = rocket.querySelector('.rocket-glow');
-        if (glow) glow.style.opacity = '0.4';
     }
     
     gameState.gameInterval = setInterval(() => {
@@ -675,79 +661,40 @@ function updateRocketPosition() {
     const rocket = document.getElementById('rocketPlane');
     if (!rocket) return;
     
-    const gameArea = document.querySelector('.chart-container');
+    const gameArea = document.querySelector('.crash-game-area');
     if (!gameArea) return;
     
     // Получаем размеры контейнера
     const containerWidth = gameArea.offsetWidth;
     const containerHeight = gameArea.offsetHeight;
     
-    // Плавный прогресс на основе множителя
-    const maxMultiplier = Math.max(gameState.crashPoint, 10);
-    const progress = Math.min((gameState.multiplier - 1) / (maxMultiplier - 1), 1);
+    // Простое плавное движение
+    const progress = Math.min((gameState.multiplier - 1) / (Math.max(gameState.crashPoint, 5) - 1), 1);
     
-    // Горизонтальное движение - плавная кривая
+    // Горизонтальное движение
     const startX = 40;
     const endX = containerWidth - 60;
-    const x = startX + (endX - startX) * Math.pow(progress, 0.7); // Степенная функция для плавности
+    const x = startX + (endX - startX) * progress;
     
-    // Вертикальное движение - логарифмическая кривая как в настоящих краш играх
-    const startY = containerHeight - 40;
-    const endY = 40;
-    const logProgress = progress > 0 ? Math.log(1 + progress * 9) / Math.log(10) : 0;
-    const y = startY - (startY - endY) * logProgress;
+    // Вертикальное движение
+    const startY = containerHeight - 60;
+    const endY = 60;
+    const y = startY - (startY - endY) * progress;
     
-    // Плавный поворот ракеты
-    const maxRotation = 25;
-    const rotation = Math.min(progress * maxRotation, maxRotation);
+    // Простой поворот
+    const rotation = Math.min(progress * 15, 15);
     
-    // Плавное масштабирование
-    const minScale = 1;
-    const maxScale = 1.3;
-    const scale = minScale + (maxScale - minScale) * Math.min(progress * 1.5, 1);
-    
-    // Применяем позицию с плавными переходами
+    // Применяем позицию
     rocket.style.left = `${x}px`;
     rocket.style.bottom = `${containerHeight - y}px`;
-    rocket.style.transform = `rotate(${rotation}deg) scale(${scale})`;
+    rocket.style.transform = `rotate(${rotation}deg)`;
     
     // Эффекты для высоких множителей
     if (gameState.multiplier > 3) {
-        rocket.classList.add('high-multiplier');
-        
-        // Плавное свечение без резких изменений
-        const glowIntensity = Math.min((gameState.multiplier - 3) / 7, 1); // От 0 до 1
-        const brightness = 1.2 + glowIntensity * 0.6;
-        const glowSize = 10 + glowIntensity * 15;
-        
-        rocket.style.filter = `brightness(${brightness}) drop-shadow(0 0 ${glowSize}px rgba(255, 107, 53, ${0.6 + glowIntensity * 0.4}))`;
-        
-        // Добавляем след ракеты
-        const trail = rocket.querySelector('.rocket-trail');
-        if (trail) {
-            trail.style.opacity = Math.min(glowIntensity, 0.8);
-            trail.style.width = `${60 + glowIntensity * 40}px`;
-        }
-        
-        const glow = rocket.querySelector('.rocket-glow');
-        if (glow) {
-            glow.style.opacity = Math.min(glowIntensity * 0.6, 0.4);
-        }
+        rocket.style.filter = 'brightness(1.5) drop-shadow(0 0 12px rgba(255, 107, 53, 0.8))';
     } else {
-        rocket.classList.remove('high-multiplier');
         rocket.style.filter = 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 107, 53, 0.6))';
-        
-        // Скрываем эффекты
-        const trail = rocket.querySelector('.rocket-trail');
-        if (trail) trail.style.opacity = '0';
-        
-        const glow = rocket.querySelector('.rocket-glow');
-        if (glow) glow.style.opacity = '0';
     }
-    
-    // Добавляем небольшое покачивание для реалистичности (очень деликатное)
-    const wobble = Math.sin(Date.now() * 0.01) * 0.5; // Очень маленькое покачивание
-    rocket.style.transform += ` translateY(${wobble}px)`;
 }
 
 function crashGame() {
@@ -757,22 +704,11 @@ function crashGame() {
     const timerEl = document.getElementById('crashTimer');
     if (timerEl) timerEl.textContent = '💥';
     
-    // Красивая анимация краша ракеты
+    // Простая анимация краша ракеты
     const rocket = document.getElementById('rocketPlane');
     if (rocket) {
-        rocket.classList.remove('flying', 'high-multiplier');
+        rocket.classList.remove('flying');
         rocket.classList.add('crashed');
-        
-        // Запускаем анимацию взрыва для эффектов
-        const trail = rocket.querySelector('.rocket-trail');
-        if (trail) {
-            trail.style.background = 'linear-gradient(90deg, rgba(255, 0, 0, 1) 0%, rgba(255, 107, 53, 0.5) 50%, transparent 100%)';
-        }
-        
-        const glow = rocket.querySelector('.rocket-glow');
-        if (glow) {
-            glow.style.background = 'radial-gradient(circle, rgba(255, 0, 0, 0.8) 0%, rgba(255, 107, 53, 0.4) 50%, transparent 70%)';
-        }
     }
     
     if (gameState.hasBet) {
@@ -818,7 +754,7 @@ function updateCrashHistory() {
     
     historyEl.innerHTML = '';
     gameState.gameHistory.forEach(multiplier => {
-        const item = document.createElement('div');
+        const item = document.createElement('span');
         item.className = 'history-item';
         item.textContent = `${multiplier.toFixed(2)}x`;
         
