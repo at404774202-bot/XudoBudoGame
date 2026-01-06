@@ -263,6 +263,25 @@ function purchaseFromInput() {
     purchaseStars(amount);
 }
 
+// Функция для быстрого выбора суммы
+function setQuickAmount(amount) {
+    const amountInput = document.getElementById('topUpAmount');
+    if (amountInput) {
+        amountInput.value = amount;
+        
+        // Добавляем визуальный эффект
+        amountInput.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+            amountInput.style.transform = 'scale(1)';
+        }, 200);
+    }
+    
+    // Haptic feedback
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
+}
+
 function simulatePayment(amount) {
     showNotification('🔄 Обработка платежа...');
     
