@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>XudoBudoGame</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Telegram Web App script with fallback -->
     <script>
-        // Create fallback if Telegram script fails to load
         window.addEventListener('DOMContentLoaded', function() {
             if (!window.Telegram) {
                 window.Telegram = {
@@ -78,183 +76,94 @@
                 </div>
             </section>
 
-            <!-- Crash Game Section - НОВЫЙ СОВРЕМЕННЫЙ ДИЗАЙН -->
+            <!-- Crash Game Section - ПРОСТОЙ РАБОЧИЙ ИНТЕРФЕЙС -->
             <section id="crash" class="section">
-                <!-- Полноэкранная игра -->
-                <div class="crash-game-modern">
+                <div class="crash-game-simple">
                     <!-- Верхняя панель -->
-                    <div class="crash-header">
-                        <button class="header-btn back-btn" onclick="showSection('games')">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                            </svg>
-                        </button>
+                    <div class="crash-top-bar">
+                        <button class="back-button" onclick="showSection('games')">← Назад</button>
+                        <div class="crash-balance">⭐ <span id="crashBalance">1,000</span></div>
+                        <button class="sound-button" onclick="toggleSound()" id="crashSoundBtn">🔊</button>
+                    </div>
+
+                    <!-- Игровая область с ракетой -->
+                    <div class="crash-game-area">
+                        <!-- Статус и таймер -->
+                        <div class="crash-status">
+                            <span id="crashStatusText">Ожидание игроков</span>
+                            <span class="crash-timer" id="crashTimer">5</span>
+                        </div>
+
+                        <!-- Множитель -->
+                        <div class="crash-multiplier" id="crashMultiplier">1.00x</div>
+
+                        <!-- График -->
+                        <canvas id="gameCanvas" class="crash-canvas"></canvas>
                         
-                        <div class="header-info">
-                            <div class="balance-chip">
-                                <span class="balance-icon">⭐</span>
-                                <span class="balance-text" id="crashBalance">1,000</span>
+                        <!-- Ракета -->
+                        <div class="crash-rocket" id="rocketPlane">
+                            <img src="raketa.png" alt="Rocket" class="rocket-img">
+                        </div>
+                    </div>
+
+                    <!-- История -->
+                    <div class="crash-history">
+                        <div class="history-title">История:</div>
+                        <div class="history-items" id="crashHistory">
+                            <span class="history-item high">5.67x</span>
+                            <span class="history-item medium">2.45x</span>
+                            <span class="history-item low">1.23x</span>
+                            <span class="history-item high">8.91x</span>
+                            <span class="history-item low">1.05x</span>
+                        </div>
+                    </div>
+
+                    <!-- Панель ставок -->
+                    <div class="crash-betting">
+                        <!-- Ставка -->
+                        <div class="bet-section">
+                            <label>Ставка:</label>
+                            <div class="bet-controls">
+                                <button onclick="adjustBet(-10)">-</button>
+                                <input type="number" id="betAmountInput" value="100" min="1">
+                                <button onclick="adjustBet(10)">+</button>
                             </div>
-                            
-                            <button class="header-btn sound-btn" onclick="toggleSound()" id="crashSoundBtn">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                                </svg>
+                        </div>
+
+                        <!-- Авто-вывод -->
+                        <div class="auto-section">
+                            <label>Авто-вывод:</label>
+                            <div class="auto-controls">
+                                <button onclick="adjustCashout(-0.1)">-</button>
+                                <input type="number" id="autoCashoutInput" value="2.00" min="1.01" step="0.01">
+                                <button onclick="adjustCashout(0.1)">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Быстрые ставки -->
+                        <div class="quick-bets">
+                            <button onclick="setQuickBet(50)">50</button>
+                            <button onclick="setQuickBet(100)">100</button>
+                            <button onclick="setQuickBet(250)">250</button>
+                            <button onclick="setQuickBet(500)">500</button>
+                        </div>
+
+                        <!-- Кнопки действий -->
+                        <div class="action-buttons">
+                            <button class="bet-button" id="crashBetBtn" onclick="placeCrashBet()">
+                                Поставить <span class="btn-amount">100 ⭐</span>
+                            </button>
+                            <button class="cashout-button" id="crashCashoutBtn" onclick="crashCashout()" disabled>
+                                Забрать <span class="btn-amount">0 ⭐</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Игровая область -->
-                    <div class="game-area">
-                        <!-- Статус игры -->
-                        <div class="game-status-bar">
-                            <div class="status-indicator" id="crashStatusIndicator">
-                                <div class="status-dot"></div>
-                                <span class="status-text" id="crashStatusText">Ожидание игроков</span>
-                            </div>
-                            <div class="round-timer" id="crashTimer">5</div>
-                        </div>
-
-                        <!-- График и ракета -->
-                        <div class="chart-container">
-                            <canvas id="gameCanvas" class="game-canvas"></canvas>
-                            
-                            <!-- Множитель -->
-                            <div class="multiplier-overlay">
-                                <div class="multiplier-value" id="crashMultiplier">1.00x</div>
-                                <div class="multiplier-subtitle">Текущий множитель</div>
-                            </div>
-                            
-                            <!-- Ракета -->
-                            <div class="rocket-container" id="rocketPlane">
-                                <div class="rocket-trail"></div>
-                                <img src="raketa.png" alt="Rocket" class="rocket-sprite">
-                                <div class="rocket-glow"></div>
-                            </div>
-                        </div>
-
-                        <!-- История раундов -->
-                        <div class="history-section">
-                            <div class="history-label">Последние раунды</div>
-                            <div class="history-grid" id="crashHistory">
-                                <div class="history-item high">5.67x</div>
-                                <div class="history-item medium">2.45x</div>
-                                <div class="history-item low">1.23x</div>
-                                <div class="history-item high">8.91x</div>
-                                <div class="history-item low">1.05x</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Панель управления -->
-                    <div class="control-section">
-                        <!-- Вкладки -->
-                        <div class="control-tabs">
-                            <button class="tab-btn active" data-tab="manual">Ручная игра</button>
-                            <button class="tab-btn" data-tab="auto">Авто игра</button>
-                        </div>
-
-                        <!-- Ручная игра -->
-                        <div class="tab-content active" id="manual-tab">
-                            <div class="betting-row">
-                                <div class="input-group">
-                                    <label class="input-label">Сумма ставки</label>
-                                    <div class="amount-input">
-                                        <button class="amount-btn decrease" onclick="adjustBet(-10)">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M19 13H5v-2h14v2z"/>
-                                            </svg>
-                                        </button>
-                                        <input type="number" id="betAmountInput" value="100" min="1" class="amount-field">
-                                        <button class="amount-btn increase" onclick="adjustBet(10)">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                                            </svg>
-                                        </button>
-                                        <div class="currency-badge">⭐</div>
-                                    </div>
-                                </div>
-
-                                <div class="input-group">
-                                    <label class="input-label">Авто-вывод</label>
-                                    <div class="amount-input">
-                                        <button class="amount-btn decrease" onclick="adjustCashout(-0.1)">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M19 13H5v-2h14v2z"/>
-                                            </svg>
-                                        </button>
-                                        <input type="number" id="autoCashoutInput" value="2.00" min="1.01" step="0.01" class="amount-field">
-                                        <button class="amount-btn increase" onclick="adjustCashout(0.1)">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                                            </svg>
-                                        </button>
-                                        <div class="currency-badge">x</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Быстрые ставки -->
-                            <div class="quick-bets">
-                                <button class="quick-bet-btn" onclick="setQuickBet(50)">50</button>
-                                <button class="quick-bet-btn" onclick="setQuickBet(100)">100</button>
-                                <button class="quick-bet-btn" onclick="setQuickBet(250)">250</button>
-                                <button class="quick-bet-btn" onclick="setQuickBet(500)">500</button>
-                                <button class="quick-bet-btn" onclick="setQuickBet(1000)">1K</button>
-                            </div>
-
-                            <!-- Основные кнопки -->
-                            <div class="action-buttons">
-                                <button class="action-btn bet-btn" id="crashBetBtn" onclick="placeCrashBet()">
-                                    <div class="btn-content">
-                                        <span class="btn-text">Поставить</span>
-                                        <span class="btn-amount">100 ⭐</span>
-                                    </div>
-                                </button>
-                                
-                                <button class="action-btn cashout-btn" id="crashCashoutBtn" onclick="crashCashout()" disabled>
-                                    <div class="btn-content">
-                                        <span class="btn-text">Забрать</span>
-                                        <span class="btn-amount">0 ⭐</span>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Авто игра -->
-                        <div class="tab-content" id="auto-tab">
-                            <div class="auto-settings">
-                                <div class="setting-row">
-                                    <label class="setting-label">Количество игр</label>
-                                    <input type="number" class="setting-input" value="10" min="1">
-                                </div>
-                                <div class="setting-row">
-                                    <label class="setting-label">Остановить при выигрыше</label>
-                                    <input type="number" class="setting-input" value="1000" min="1">
-                                </div>
-                                <div class="setting-row">
-                                    <label class="setting-label">Остановить при проигрыше</label>
-                                    <input type="number" class="setting-input" value="500" min="1">
-                                </div>
-                            </div>
-                            
-                            <button class="action-btn auto-start-btn" disabled>
-                                <div class="btn-content">
-                                    <span class="btn-text">Запустить авто-игру</span>
-                                </div>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Список игроков -->
-                    <div class="players-section">
-                        <div class="players-header">
-                            <h3 class="players-title">Игроки онлайн</h3>
-                            <div class="online-count" id="crashOnlineCount">1</div>
-                        </div>
-                        
+                    <!-- Игроки -->
+                    <div class="crash-players">
+                        <div class="players-title">Игроки онлайн: <span id="crashOnlineCount">1</span></div>
                         <div class="players-list" id="crashPlayersList">
-                            <!-- Игроки будут добавлены динамически -->
+                            <!-- Игроки добавляются динамически -->
                         </div>
                     </div>
                 </div>
@@ -272,7 +181,6 @@
                         <p>Введи промокод и получи награду</p>
                         <button class="promo-btn" onclick="openPromoModal()">Ввести</button>
                     </div>
-
                 </div>
             </section>
 
@@ -343,8 +251,6 @@
             </div>
         </div>
 
-
-
         <!-- Top Up Modal -->
         <div id="topUpModal" class="modal">
             <div class="modal-content top-up-modal">
@@ -414,11 +320,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Crash Game Modal -->
-        <div id="crashGameModal" class="modal" style="display: none;">
-            <!-- Удален - теперь используется полноэкранная секция -->
         </div>
 
         <!-- Bottom Navigation -->
