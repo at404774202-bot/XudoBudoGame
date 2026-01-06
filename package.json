@@ -1,0 +1,25 @@
+{
+  "name": "xudobudogame-welcome-bot",
+  "version": "1.0.0",
+  "description": "Приветственный бот для XudoBudoGame с кнопкой запуска игры",
+  "main": "welcome-bot.js",
+  "scripts": {
+    "start": "node welcome-bot.js",
+    "dev": "nodemon welcome-bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "game",
+    "welcome",
+    "crash"
+  ],
+  "author": "XudoBudoGame",
+  "license": "MIT"
+}
