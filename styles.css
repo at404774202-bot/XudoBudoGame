@@ -2143,208 +2143,274 @@ body {
         padding: 1px 6px;
     }
 }
-/* Rocket Animation Styles - Like Pilotka */
-.rocket-plane {
+/* Rocket Animation Styles - Плавная и красивая анимация */
+.rocket-container {
     position: absolute;
     width: 40px;
     height: 40px;
     z-index: 15;
-    transition: all 0.05s linear;
-    pointer-events: none;
+    transition: all 0.08s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Плавные переходы */
     left: 40px;
-    top: 80%;
+    bottom: 20%;
     transform-origin: center center;
     will-change: transform, filter;
 }
 
-.rocket-img {
+.rocket-sprite {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: brightness(1.1) drop-shadow(0 0 6px rgba(106, 179, 243, 0.6));
-    transition: filter 0.1s ease;
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 107, 53, 0.6));
+    transition: filter 0.2s ease;
 }
 
-.rocket-plane.flying {
-    animation: rocketFlyPilotka 0.15s ease-in-out infinite alternate;
+/* Плавная анимация полета */
+.rocket-container.flying {
+    animation: smoothFlight 0.3s ease-in-out infinite alternate;
 }
 
-@keyframes rocketFlyPilotka {
+@keyframes smoothFlight {
     0% { 
-        transform: translateY(0px) translateX(0px) rotate(0deg);
-    }
-    50% { 
-        transform: translateY(-1px) translateX(0.5px) rotate(0.5deg);
+        transform: translateY(0px) translateX(0px);
     }
     100% { 
-        transform: translateY(-2px) translateX(1px) rotate(1deg);
+        transform: translateY(-1px) translateX(0.5px);
     }
 }
 
-/* Pilotka-style rocket trail effect */
-.rocket-plane::before {
-    content: '';
+/* След ракеты */
+.rocket-trail {
     position: absolute;
     width: 60px;
-    height: 3px;
+    height: 4px;
     background: linear-gradient(90deg, 
-        rgba(106, 179, 243, 0.8) 0%, 
-        rgba(106, 179, 243, 0.4) 50%, 
+        rgba(255, 107, 53, 0.8) 0%, 
+        rgba(255, 107, 53, 0.4) 50%, 
         transparent 100%);
     left: -50px;
     top: 50%;
     transform: translateY(-50%);
     border-radius: 2px;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: all 0.3s ease;
 }
 
-.rocket-plane.flying::before {
-    opacity: 1;
-    animation: trailPulse 0.3s ease-in-out infinite alternate;
+.rocket-container.flying .rocket-trail {
+    opacity: 0.7;
+    animation: trailFlow 0.4s ease-in-out infinite alternate;
 }
 
-@keyframes trailPulse {
+@keyframes trailFlow {
     0% { 
-        opacity: 0.6;
-        transform: translateY(-50%) scaleX(0.8);
+        opacity: 0.5;
+        transform: translateY(-50%) scaleX(0.9);
+    }
+    100% { 
+        opacity: 0.8;
+        transform: translateY(-50%) scaleX(1.1);
+    }
+}
+
+/* Свечение ракеты */
+.rocket-glow {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, rgba(255, 107, 53, 0.3) 0%, transparent 70%);
+    left: -20px;
+    top: -20px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.rocket-container.flying .rocket-glow {
+    opacity: 0.4;
+    animation: glowPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+    0% { 
+        opacity: 0.2;
+        transform: scale(0.9);
+    }
+    100% { 
+        opacity: 0.5;
+        transform: scale(1.1);
+    }
+}
+
+/* Эффекты для высоких множителей */
+.rocket-container.high-multiplier {
+    animation: boostFlight 0.2s ease-in-out infinite alternate;
+}
+
+@keyframes boostFlight {
+    0% { 
+        transform: translateY(0px) scale(1);
+    }
+    100% { 
+        transform: translateY(-2px) scale(1.02);
+    }
+}
+
+.rocket-container.high-multiplier .rocket-trail {
+    background: linear-gradient(90deg, 
+        rgba(255, 215, 0, 0.9) 0%, 
+        rgba(255, 107, 53, 0.7) 30%,
+        rgba(255, 107, 53, 0.4) 60%, 
+        transparent 100%);
+    animation: superTrail 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes superTrail {
+    0% { 
+        opacity: 0.7;
+        transform: translateY(-50%) scaleX(1);
+        width: 60px;
     }
     100% { 
         opacity: 1;
-        transform: translateY(-50%) scaleX(1.2);
+        transform: translateY(-50%) scaleX(1.3);
+        width: 80px;
     }
 }
 
-/* High multiplier effects like pilotka */
-.rocket-plane.high-multiplier {
-    animation: rocketBoost 0.1s ease-in-out infinite alternate;
+.rocket-container.high-multiplier .rocket-glow {
+    background: radial-gradient(circle, 
+        rgba(255, 215, 0, 0.4) 0%, 
+        rgba(255, 107, 53, 0.3) 50%, 
+        transparent 70%);
+    animation: superGlow 0.8s ease-in-out infinite alternate;
 }
 
-@keyframes rocketBoost {
+@keyframes superGlow {
     0% { 
-        transform: translateY(0px) scale(1) rotate(0deg);
-        filter: brightness(1.5) drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
+        opacity: 0.4;
+        transform: scale(1);
     }
     100% { 
-        transform: translateY(-3px) scale(1.1) rotate(2deg);
-        filter: brightness(2) drop-shadow(0 0 25px rgba(255, 215, 0, 1));
+        opacity: 0.7;
+        transform: scale(1.4);
     }
 }
 
-/* Crash effect like pilotka */
-.rocket-plane.crashed {
-    animation: rocketCrash 0.5s ease-out forwards;
+/* Анимация краша */
+.rocket-container.crashed {
+    animation: crashSequence 0.6s ease-out forwards;
 }
 
-@keyframes rocketCrash {
+@keyframes crashSequence {
     0% { 
         transform: scale(1) rotate(0deg);
-        filter: brightness(1) saturate(1);
+        filter: brightness(1.2) saturate(1);
+        opacity: 1;
     }
-    50% { 
-        transform: scale(1.3) rotate(180deg);
-        filter: brightness(3) saturate(0) blur(2px);
+    30% { 
+        transform: scale(1.4) rotate(45deg);
+        filter: brightness(2.5) saturate(0.3) blur(1px);
+        opacity: 0.9;
+    }
+    60% { 
+        transform: scale(1.8) rotate(180deg);
+        filter: brightness(3) saturate(0) blur(3px);
+        opacity: 0.6;
     }
     100% { 
-        transform: scale(0.5) rotate(360deg);
+        transform: scale(0.3) rotate(360deg);
         filter: brightness(0.5) saturate(0) blur(5px);
-        opacity: 0.3;
+        opacity: 0;
     }
 }
 
-/* Game Canvas Container */
-.game-chart {
-    position: relative;
-    background: linear-gradient(135deg, 
-        rgba(23, 33, 43, 0.9) 0%, 
-        rgba(35, 46, 60, 0.9) 100%);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    overflow: hidden;
+/* Улучшенная анимация краша для следа */
+.rocket-container.crashed .rocket-trail {
+    animation: trailCrash 0.6s ease-out forwards;
 }
 
-#gameCanvas {
-    width: 100%;
-    height: 200px;
-    border-radius: 12px;
-    background: transparent;
-}
-
-.multiplier-display {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 48px;
-    font-weight: 900;
-    color: #ff6b35;
-    text-shadow: 0 0 30px rgba(255, 107, 53, 0.8);
-    z-index: 10;
-    background: rgba(0, 0, 0, 0.4);
-    padding: 16px 32px;
-    border-radius: 20px;
-    backdrop-filter: blur(15px);
-    border: 2px solid rgba(255, 107, 53, 0.3);
-    animation: pulse-multiplier 2s infinite;
-}
-
-@keyframes pulse-multiplier {
-    0%, 100% { 
-        transform: translate(-50%, -50%) scale(1);
-        text-shadow: 0 0 30px rgba(255, 107, 53, 0.8);
+@keyframes trailCrash {
+    0% { 
+        opacity: 0.8;
+        background: linear-gradient(90deg, rgba(255, 107, 53, 0.8) 0%, transparent 100%);
     }
     50% { 
-        transform: translate(-50%, -50%) scale(1.05);
-        text-shadow: 0 0 40px rgba(255, 107, 53, 1);
+        opacity: 1;
+        background: linear-gradient(90deg, rgba(255, 0, 0, 1) 0%, rgba(255, 107, 53, 0.5) 50%, transparent 100%);
+        transform: translateY(-50%) scaleX(2);
+    }
+    100% { 
+        opacity: 0;
+        background: linear-gradient(90deg, rgba(100, 0, 0, 0.3) 0%, transparent 100%);
+        transform: translateY(-50%) scaleX(0.5);
     }
 }
 
-.game-status {
-    position: absolute;
-    top: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 18px;
-    font-weight: 700;
-    color: white;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 12px 24px;
-    border-radius: 25px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    z-index: 5;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+/* Улучшенная анимация краша для свечения */
+.rocket-container.crashed .rocket-glow {
+    animation: glowCrash 0.6s ease-out forwards;
 }
 
-/* Mobile Responsive for Rocket */
+@keyframes glowCrash {
+    0% { 
+        opacity: 0.4;
+        background: radial-gradient(circle, rgba(255, 107, 53, 0.4) 0%, transparent 70%);
+    }
+    30% { 
+        opacity: 1;
+        background: radial-gradient(circle, rgba(255, 0, 0, 0.8) 0%, rgba(255, 107, 53, 0.4) 50%, transparent 70%);
+        transform: scale(2);
+    }
+    100% { 
+        opacity: 0;
+        background: radial-gradient(circle, rgba(100, 0, 0, 0.2) 0%, transparent 70%);
+        transform: scale(3);
+    }
+}
+
+/* Мобильная адаптация */
 @media (max-width: 480px) {
-    .rocket-plane {
+    .rocket-container {
+        width: 30px;
+        height: 30px;
+        transition: all 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    
+    .rocket-trail {
+        width: 45px;
+        height: 3px;
+        left: -35px;
+    }
+    
+    .rocket-glow {
+        width: 60px;
+        height: 60px;
+        left: -15px;
+        top: -15px;
+    }
+    
+    .rocket-container.high-multiplier .rocket-trail {
+        width: 60px;
+    }
+}
+
+@media (max-width: 360px) {
+    .rocket-container {
         width: 25px;
         height: 25px;
     }
     
-    .multiplier-display {
-        font-size: 24px;
-        padding: 6px 12px;
-        top: 15px;
-        left: 15px;
+    .rocket-trail {
+        width: 35px;
+        height: 2px;
+        left: -25px;
     }
     
-    .game-status {
-        font-size: 14px;
-        padding: 6px 12px;
-        bottom: 15px;
-    }
-    
-    .game-chart {
-        padding: 15px;
-    }
-    
-    #gameCanvas {
-        height: 160px;
+    .rocket-glow {
+        width: 50px;
+        height: 50px;
+        left: -12px;
+        top: -12px;
     }
 }
 /* Mobile Crash Game Optimization */
