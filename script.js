@@ -178,26 +178,43 @@ function closeTopUpModal() {
 }
 
 function purchaseStars(amount) {
-    if (amount < 1 || amount > 2500) {
-        showNotification('Сумма должна быть от 1 до 2500 звезд!');
+    if (amount < 1 || amount > 10000) {
+        showNotification('Сумма должна быть от 1 до 10,000 звезд!');
         return;
     }
     
-    if (!window.Telegram?.WebApp) {
-        showNotification('Ошибка: Telegram WebApp недоступен');
-        return;
-    }
-    
-    if (window.Telegram.WebApp.openInvoice) {
+    // Проверяем доступность Telegram WebApp
+    if (window.Telegram?.WebApp?.openInvoice) {
         try {
-            const invoiceLink = createTelegramStarsInvoice(amount);
+            // Создаем инвойс для Telegram Stars
+            const invoiceData = {
+                title: 'Пополнение XudoBudoGame',
+                description: `Покупка ${amount} игровых звезд`,
+                payload: JSON.stringify({
+                    type: 'stars_purchase',
+                    amount: amount,
+                    user_id: getUserData().id,
+                    timestamp: Date.now()
+                }),
+                currency: 'XTR',
+                prices: [{ 
+                    label: `${amount} звезд`, 
+                    amount: amount 
+                }]
+            };
             
+            // В реальном приложении здесь должен быть запрос к серверу для создания инвойса
+            // Для демо используем тестовую ссылку
+            const invoiceLink = `https://t.me/invoice/test_${amount}_${Date.now()}`;
+            
+            console.log('Creating Telegram Stars invoice:', invoiceData);
+            
+            // Открываем платеж через Telegram
             window.Telegram.WebApp.openInvoice(invoiceLink, (status) => {
                 console.log('Payment status:', status);
                 
                 if (status === 'paid') {
                     processSuccessfulPayment(amount);
-                    showNotification(`✅ Успешно! Получено ${amount} ⭐`);
                 } else if (status === 'cancelled') {
                     showNotification('Платеж отменен');
                 } else if (status === 'failed') {
@@ -212,7 +229,8 @@ function purchaseStars(amount) {
             showNotification('Ошибка при создании платежа');
         }
     } else {
-        console.log('Telegram payment not available, using fallback');
+        // Fallback для тестирования
+        console.log('Telegram WebApp не доступен, используем симуляцию');
         simulatePayment(amount);
     }
     
@@ -220,72 +238,95 @@ function purchaseStars(amount) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
     }
 }
-function createTelegramStarsInvoice(amount) {
-    const invoiceData = {
-        title: 'Пополнение звезд XudoBudoGame',
-        description: `Покупка ${amount} игровых звезд`,
-        payload: `stars_purchase_${amount}_${Date.now()}`,
-        currency: 'XTR',
-        prices: [{ label: `${amount} звезд`, amount: amount }]
-    };
-    
-    console.log('Creating invoice for:', invoiceData);
-    return `https://t.me/invoice/demo_${amount}_stars`;
-}
-
 function purchaseFromInput() {
     const amountInput = document.getElementById('topUpAmount');
+    if (!amountInput) {
+        showNotification('Ошибка: поле ввода не найдено');
+        return;
+    }
+    
     const amount = parseInt(amountInput.value);
     
     if (!amount || amount < 1) {
-        showNotification('Введите корректную сумму!');
+        showNotification('⚠️ Введите корректную сумму!');
+        amountInput.focus();
         return;
     }
     
     if (amount > 10000) {
-        showNotification('Максимальная сумма: 10,000 звезд');
+        showNotification('⚠️ Максимальная сумма: 10,000 звезд');
+        amountInput.value = '10000';
         return;
     }
     
+    // Запускаем процесс покупки
     purchaseStars(amount);
 }
 
 function simulatePayment(amount) {
-    showNotification('Обработка платежа...');
+    showNotification('🔄 Обработка платежа...');
     
+    // Симуляция задержки платежа
     setTimeout(() => {
-        processSuccessfulPayment(amount);
+        // Симулируем успешный платеж
+        const success = Math.random() > 0.1; // 90% успеха
+        
+        if (success) {
+            processSuccessfulPayment(amount);
+        } else {
+            showNotification('❌ Ошибка платежа. Попробуйте еще раз');
+            
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+            }
+        }
     }, 2000);
 }
 
 function processSuccessfulPayment(amount) {
+    // Добавляем звезды к балансу
     gameState.balance += amount;
+    
+    // Обновляем интерфейс
     updateBalance();
     
+    // Обновляем текущий баланс в модале
     const currentBalanceEl = document.getElementById('currentBalance');
     if (currentBalanceEl) {
         currentBalanceEl.textContent = `${gameState.balance.toLocaleString()} ⭐`;
     }
     
-    closeTopUpModal();
-    showNotification(`✅ Пополнение успешно! +${amount} ⭐`);
+    // Очищаем поле ввода
+    const amountInput = document.getElementById('topUpAmount');
+    if (amountInput) {
+        amountInput.value = '';
+    }
     
+    // Закрываем модал
+    closeTopUpModal();
+    
+    // Показываем уведомление об успехе
+    showNotification(`✅ Пополнение успешно! Получено ${amount} ⭐`);
+    
+    // Сохраняем данные
     try {
         localStorage.setItem('xudobudo_balance', gameState.balance.toString());
         localStorage.setItem('xudobudo_last_purchase', JSON.stringify({
             amount: amount,
             timestamp: Date.now(),
-            method: 'telegram_stars'
+            method: 'telegram_stars',
+            transaction_id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         }));
+        
+        console.log(`✅ Payment processed successfully: +${amount} stars, new balance: ${gameState.balance}`);
     } catch (error) {
-        console.log('Could not save to localStorage:', error);
+        console.error('Could not save payment data:', error);
     }
     
+    // Haptic feedback для успешной покупки
     if (window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
-    
-    console.log(`Payment processed: +${amount} stars, new balance: ${gameState.balance}`);
 }
 // Crash Game Functions
 function openCrashGame() {
@@ -876,6 +917,33 @@ document.addEventListener('DOMContentLoaded', function() {
         topUpModalEl.addEventListener('click', function(e) {
             if (e.target === this) {
                 closeTopUpModal();
+            }
+        });
+    }
+    
+    // Добавляем валидацию для поля пополнения
+    const topUpAmountEl = document.getElementById('topUpAmount');
+    if (topUpAmountEl) {
+        topUpAmountEl.addEventListener('input', function(e) {
+            let value = parseInt(e.target.value) || 0;
+            
+            // Ограничиваем максимальное значение
+            if (value > 10000) {
+                e.target.value = 10000;
+                showNotification('⚠️ Максимальная сумма: 10,000 звезд');
+            }
+            
+            // Убираем отрицательные значения
+            if (value < 0) {
+                e.target.value = '';
+            }
+        });
+        
+        // Добавляем обработчик Enter для быстрого пополнения
+        topUpAmountEl.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                purchaseFromInput();
             }
         });
     }
