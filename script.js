@@ -282,94 +282,9 @@ function updateRealPlayersDisplay() {
 
 // Симуляция подключения других реальных игроков
 function simulateRealPlayersJoining() {
-    const sampleUsers = [
-        { 
-            id: 987654321, 
-            firstName: 'Александр', 
-            lastName: 'Петров', 
-            username: 'alex_crypto', 
-            languageCode: 'ru',
-            photoUrl: 'https://i.pravatar.cc/80?img=1'
-        },
-        { 
-            id: 876543210, 
-            firstName: 'Maria', 
-            lastName: 'Smith', 
-            username: 'maria_trader', 
-            languageCode: 'en',
-            photoUrl: 'https://i.pravatar.cc/80?img=2'
-        },
-        { 
-            id: 765432109, 
-            firstName: 'Дмитрий', 
-            lastName: '', 
-            username: 'dmitry_win', 
-            languageCode: 'ru',
-            photoUrl: 'https://i.pravatar.cc/80?img=3'
-        },
-        { 
-            id: 654321098, 
-            firstName: 'Anna', 
-            lastName: 'Mueller', 
-            username: 'anna_lucky', 
-            languageCode: 'de',
-            photoUrl: 'https://i.pravatar.cc/80?img=4'
-        },
-        { 
-            id: 543210987, 
-            firstName: 'Сергей', 
-            lastName: 'Иванов', 
-            username: 'sergey_pro', 
-            languageCode: 'ru',
-            photoUrl: 'https://i.pravatar.cc/80?img=5'
-        },
-        { 
-            id: 432109876, 
-            firstName: 'Elena', 
-            lastName: 'Kowalski', 
-            username: 'elena_star', 
-            languageCode: 'uk',
-            photoUrl: 'https://i.pravatar.cc/80?img=6'
-        }
-    ];
-    
-    // Добавляем игроков случайно
-    setInterval(() => {
-        if (gameState.realPlayers.length < 6 && Math.random() < 0.4) {
-            const availableUsers = sampleUsers.filter(u => 
-                !gameState.realPlayers.some(p => p.id === u.id)
-            );
-            
-            if (availableUsers.length > 0) {
-                const randomUser = availableUsers[Math.floor(Math.random() * availableUsers.length)];
-                const newPlayer = createRealPlayer(randomUser);
-                gameState.realPlayers.push(newPlayer);
-                updateRealPlayersDisplay();
-                
-                // Через некоторое время игрок делает ставку (если идет фаза ставок)
-                setTimeout(() => {
-                    if (gameState.gamePhase === 'betting') {
-                        const playerIndex = gameState.realPlayers.findIndex(p => p.id === randomUser.id);
-                        if (playerIndex !== -1 && Math.random() < 0.7) { // 70% шанс что сделает ставку
-                            gameState.realPlayers[playerIndex].bet = Math.floor(Math.random() * 800) + 50;
-                            gameState.realPlayers[playerIndex].status = 'betting';
-                            updateRealPlayersDisplay();
-                        }
-                    }
-                }, Math.random() * 4000 + 1000); // От 1 до 5 секунд
-            }
-        }
-        
-        // Иногда игроки уходят (но не во время активной игры)
-        if (gameState.realPlayers.length > 2 && Math.random() < 0.15 && gameState.gamePhase === 'waiting') {
-            const nonCurrentPlayers = gameState.realPlayers.filter(p => !p.isCurrentUser);
-            if (nonCurrentPlayers.length > 0) {
-                const playerToRemove = nonCurrentPlayers[Math.floor(Math.random() * nonCurrentPlayers.length)];
-                gameState.realPlayers = gameState.realPlayers.filter(p => p.id !== playerToRemove.id);
-                updateRealPlayersDisplay();
-            }
-        }
-    }, 8000); // Каждые 8 секунд
+    // ФЕЙКОВЫЕ ИГРОКИ ПОЛНОСТЬЮ УБРАНЫ
+    // Теперь показываются только реальные пользователи бота
+    console.log('Фейковые игроки отключены - только реальные пользователи');
 }
 
 function updateRealPlayersStatus() {
@@ -589,7 +504,7 @@ function startFlying() {
     gameState.gameStartTime = Date.now();
     
     const statusEl = document.getElementById('gameStatus');
-    if (statusEl) statusEl.textContent = 'Летит...';
+    if (statusEl) statusEl.textContent = 'УЛЕТЕЛ!';
     
     const betBtn = document.getElementById('betBtn');
     if (betBtn) betBtn.disabled = true;
@@ -609,8 +524,7 @@ function startFlying() {
         updateGameDisplay();
         updateRealPlayersStatus();
         
-        // Звук двигателя ракеты
-        if (Math.random() < 0.3) playRocketEngine();
+        // УБРАЛИ ЗВУК РАКЕТЫ - больше не играет во время полета
         
         if (gameState.multiplier >= gameState.crashPoint) crashGame();
         if (gameState.hasBet && gameState.autoCashout > 0 && gameState.multiplier >= gameState.autoCashout) cashOut();
@@ -620,23 +534,28 @@ function startFlying() {
 function updateMultiplier() {
     const timeElapsed = (Date.now() - gameState.gameStartTime) / 1000;
     
-    // Рост множителя как в pilotka - экспоненциальный с замедлением
-    let baseSpeed = 0.01;
+    // УЛУЧШЕННОЕ УСКОРЕНИЕ РАКЕТЫ КАК В PILOTKA
+    let baseSpeed = 0.008; // Начальная скорость
     
-    // Ускорение в начале (первые 3 секунды)
-    if (timeElapsed < 3) {
-        baseSpeed *= (1 + timeElapsed * 0.2);
-    }
-    
-    // Замедление после 10 секунд
-    if (timeElapsed > 10) {
-        baseSpeed *= Math.max(0.3, 1 - (timeElapsed - 10) * 0.05);
+    // Постепенное ускорение со временем (как в pilotka)
+    if (timeElapsed < 2) {
+        // Медленный старт первые 2 секунды
+        baseSpeed *= (0.5 + timeElapsed * 0.25);
+    } else if (timeElapsed < 5) {
+        // Ускорение с 2 до 5 секунд
+        baseSpeed *= (1 + (timeElapsed - 2) * 0.3);
+    } else if (timeElapsed < 10) {
+        // Сильное ускорение с 5 до 10 секунд
+        baseSpeed *= (1.9 + (timeElapsed - 5) * 0.4);
+    } else {
+        // Максимальное ускорение после 10 секунд
+        baseSpeed *= (4.9 + (timeElapsed - 10) * 0.2);
     }
     
     // Случайные колебания как в pilotka
-    const randomFactor = 0.7 + Math.random() * 0.6; // от 0.7 до 1.3
+    const randomFactor = 0.8 + Math.random() * 0.4; // от 0.8 до 1.2
     
-    // Финальная скорость роста
+    // Финальная скорость роста с ускорением
     const increment = baseSpeed * randomFactor;
     
     // Обновляем множитель
@@ -645,9 +564,11 @@ function updateMultiplier() {
     // Ограничиваем максимальным значением краша
     gameState.multiplier = Math.min(gameState.multiplier, gameState.crashPoint);
     
-    // Добавляем небольшие "скачки" как в pilotka
-    if (Math.random() < 0.02) { // 2% шанс на скачок
-        gameState.multiplier += 0.01 + Math.random() * 0.03;
+    // Добавляем "скачки" как в pilotka (чаще на высоких множителях)
+    const jumpChance = gameState.multiplier > 5 ? 0.05 : 0.02;
+    if (Math.random() < jumpChance) {
+        const jumpSize = gameState.multiplier > 10 ? 0.05 + Math.random() * 0.1 : 0.01 + Math.random() * 0.03;
+        gameState.multiplier += jumpSize;
         gameState.multiplier = Math.min(gameState.multiplier, gameState.crashPoint);
     }
 }
@@ -718,27 +639,36 @@ function drawChart() {
     // Очищаем canvas
     ctx.clearRect(0, 0, width, height);
     
-    // Фон с градиентом
-    const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-    bgGradient.addColorStop(0, 'rgba(23, 33, 43, 0.1)');
-    bgGradient.addColorStop(1, 'rgba(35, 46, 60, 0.3)');
+    // Темный градиентный фон как в pilotka
+    const bgGradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height));
+    bgGradient.addColorStop(0, 'rgba(10, 10, 10, 0.3)');
+    bgGradient.addColorStop(0.5, 'rgba(26, 26, 46, 0.5)');
+    bgGradient.addColorStop(1, 'rgba(22, 33, 62, 0.7)');
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
     
     if (gameState.gamePhase === 'flying' && gameState.curve.length > 1) {
-        // Рисуем кривую роста множителя
+        // КРАСНАЯ КРИВАЯ КАК В PILOTKA
         const gradient = ctx.createLinearGradient(0, height, 0, 0);
-        gradient.addColorStop(0, 'rgba(106, 179, 243, 0.1)');
-        gradient.addColorStop(0.5, 'rgba(106, 179, 243, 0.3)');
-        gradient.addColorStop(1, 'rgba(106, 179, 243, 0.6)');
+        gradient.addColorStop(0, 'rgba(255, 107, 53, 0.1)');
+        gradient.addColorStop(0.3, 'rgba(255, 107, 53, 0.3)');
+        gradient.addColorStop(0.7, 'rgba(255, 107, 53, 0.5)');
+        gradient.addColorStop(1, 'rgba(255, 107, 53, 0.8)');
         
         ctx.beginPath();
         ctx.moveTo(0, height);
         
+        // Рисуем плавную кривую
         gameState.curve.forEach((point, index) => {
-            const x = (index / gameState.curve.length) * width;
-            const y = height - (point - 1) * (height / Math.max(gameState.crashPoint - 1, 2));
-            ctx.lineTo(x, Math.max(0, y));
+            const x = (index / (gameState.curve.length - 1)) * width;
+            const normalizedMultiplier = Math.log(point) / Math.log(Math.max(gameState.crashPoint, 10));
+            const y = height - (normalizedMultiplier * height * 0.8);
+            
+            if (index === 0) {
+                ctx.moveTo(x, Math.min(height, Math.max(0, y)));
+            } else {
+                ctx.lineTo(x, Math.min(height, Math.max(0, y)));
+            }
         });
         
         ctx.lineTo(width, height);
@@ -746,26 +676,43 @@ function drawChart() {
         ctx.fillStyle = gradient;
         ctx.fill();
         
-        // Рисуем линию
+        // Яркая красная линия как в pilotka
         ctx.beginPath();
         gameState.curve.forEach((point, index) => {
-            const x = (index / gameState.curve.length) * width;
-            const y = height - (point - 1) * (height / Math.max(gameState.crashPoint - 1, 2));
+            const x = (index / (gameState.curve.length - 1)) * width;
+            const normalizedMultiplier = Math.log(point) / Math.log(Math.max(gameState.crashPoint, 10));
+            const y = height - (normalizedMultiplier * height * 0.8);
+            
             if (index === 0) {
-                ctx.moveTo(x, Math.max(0, y));
+                ctx.moveTo(x, Math.min(height, Math.max(0, y)));
             } else {
-                ctx.lineTo(x, Math.max(0, y));
+                ctx.lineTo(x, Math.min(height, Math.max(0, y)));
             }
         });
-        ctx.strokeStyle = '#6ab3f3';
-        ctx.lineWidth = 3;
+        
+        // Градиент для линии
+        const lineGradient = ctx.createLinearGradient(0, 0, width, 0);
+        lineGradient.addColorStop(0, '#ff6b35');
+        lineGradient.addColorStop(0.5, '#ff4757');
+        lineGradient.addColorStop(1, '#ff3742');
+        
+        ctx.strokeStyle = lineGradient;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = '#ff6b35';
+        ctx.shadowBlur = 10;
         ctx.stroke();
+        
+        // Убираем тень для следующих элементов
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
     }
     
     // Добавляем текущую точку в кривую
     if (gameState.gamePhase === 'flying') {
         gameState.curve.push(gameState.multiplier);
-        if (gameState.curve.length > 100) {
+        if (gameState.curve.length > 150) { // Увеличили для плавности
             gameState.curve.shift();
         }
     }
@@ -805,9 +752,9 @@ function updateBetButton() {
     
     if (!betBtn || !betAmountInput) return;
     
-    const amount = parseInt(betAmountInput.value) || 10;
+    const amount = parseInt(betAmountInput.value) || 100;
     const amountSpan = betBtn.querySelector('.btn-amount');
-    if (amountSpan) amountSpan.textContent = `${amount} ⭐`;
+    if (amountSpan) amountSpan.textContent = `⭐ ${amount}`;
     
     if (gameState.gamePhase === 'betting' && !gameState.hasBet) {
         betBtn.disabled = false;
@@ -851,12 +798,11 @@ function placeBet() {
     if (gameState.gamePhase !== 'betting' || gameState.hasBet) return;
     
     const betAmountInput = document.getElementById('betAmount');
-    const autoCashoutInput = document.getElementById('autoCashout');
     
-    if (!betAmountInput || !autoCashoutInput) return;
+    if (!betAmountInput) return;
     
-    const betAmount = parseInt(betAmountInput.value) || 10;
-    const autoCashout = parseFloat(autoCashoutInput.value) || 2.00;
+    const betAmount = parseInt(betAmountInput.value) || 100;
+    const autoCashout = 2.00; // Фиксированное значение как в pilotka
     
     if (betAmount < 1) {
         playErrorSound();
@@ -866,11 +812,6 @@ function placeBet() {
     if (betAmount > gameState.balance) {
         playErrorSound();
         return showNotification('⚠️ Недостаточно средств!');
-    }
-    
-    if (autoCashout < 1.01) {
-        playErrorSound();
-        return showNotification('⚠️ Минимальный авто-вывод: 1.01x');
     }
     
     // Делаем ставку
