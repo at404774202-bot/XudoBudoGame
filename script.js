@@ -668,46 +668,6 @@ function showNotification(message) {
     }, 3000);
 }
 
-// Freebie functions
-function claimDailyBonus() {
-    gameState.balance += 200;
-    updateBalance();
-    showNotification('Получен ежедневный бонус: +200 ⭐!');
-    
-    if (tg.HapticFeedback) {
-        tg.HapticFeedback.notificationOccurred('success');
-    }
-}
-
-function inviteFriend() {
-    if (tg.openTelegramLink) {
-        tg.openTelegramLink('https://t.me/share/url?url=Присоединяйся к XudoBudoGame!');
-    } else {
-        if (navigator.share) {
-            navigator.share({
-                title: 'XudoBudoGame',
-                text: 'Присоединяйся к XudoBudoGame!',
-                url: window.location.href
-            });
-        }
-    }
-    showNotification('Ссылка для приглашения готова!');
-}
-
-function watchAd() {
-    setTimeout(() => {
-        gameState.balance += 100;
-        updateBalance();
-        showNotification('Получена награда за просмотр: +100 ⭐!');
-        
-        if (tg.HapticFeedback) {
-            tg.HapticFeedback.notificationOccurred('success');
-        }
-    }, 2000);
-    
-    showNotification('Просмотр рекламы...');
-}
-
 // Promo Code Functions
 function openPromoModal() {
     document.getElementById('promoModal').classList.add('active');
@@ -784,21 +744,6 @@ function activatePromoCode() {
 document.addEventListener('DOMContentLoaded', function() {
     updateBalance();
     updateHistoryDisplay();
-    
-    const claimBtn = document.querySelector('.claim-btn');
-    if (claimBtn) {
-        claimBtn.addEventListener('click', claimDailyBonus);
-    }
-    
-    const inviteBtn = document.querySelector('.invite-btn');
-    if (inviteBtn) {
-        inviteBtn.addEventListener('click', inviteFriend);
-    }
-    
-    const watchBtn = document.querySelector('.watch-btn');
-    if (watchBtn) {
-        watchBtn.addEventListener('click', watchAd);
-    }
     
     const betAmountEl = document.getElementById('betAmount');
     if (betAmountEl) {
