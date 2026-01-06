@@ -48,7 +48,7 @@
             <!-- Games Section -->
             <section id="games" class="section active">
                 <div class="section-header">
-                    <h2>🎮 Игры</h2>
+                    <h2>Игры</h2>
                 </div>
                 <div class="games-grid">
                     <div class="game-card crash-game" onclick="openCrashGame()">
@@ -57,7 +57,7 @@
                         </div>
                         <div class="game-info">
                             <h3>Crash</h3>
-                            <p>Поймай момент!</p>
+                            <p>Поймай момент и забери выигрыш!</p>
                         </div>
                         <div class="game-status online">
                             <span class="status-dot"></span>
@@ -70,25 +70,25 @@
             <!-- Freebies Section -->
             <section id="freebies" class="section">
                 <div class="section-header">
-                    <h2>🎁 Халява</h2>
+                    <h2>Халява</h2>
                 </div>
                 <div class="freebies-container">
                     <div class="freebie-card">
                         <div class="freebie-icon">🎯</div>
                         <h3>Ежедневный бонус</h3>
-                        <p>Получай награды каждый день</p>
+                        <p>Получай 200 монет каждый день</p>
                         <button class="claim-btn">Забрать</button>
                     </div>
                     <div class="freebie-card">
                         <div class="freebie-icon">👥</div>
                         <h3>Пригласи друга</h3>
-                        <p>+500 монет за каждого друга</p>
+                        <p>Получи 500 монет за каждого друга</p>
                         <button class="invite-btn">Пригласить</button>
                     </div>
                     <div class="freebie-card">
                         <div class="freebie-icon">📺</div>
                         <h3>Смотри рекламу</h3>
-                        <p>+100 монет за просмотр</p>
+                        <p>Зарабатывай 100 монет за просмотр</p>
                         <button class="watch-btn">Смотреть</button>
                     </div>
                 </div>
@@ -97,7 +97,7 @@
             <!-- Profile Section -->
             <section id="profile" class="section">
                 <div class="section-header">
-                    <h2>👤 Профиль</h2>
+                    <h2>Профиль</h2>
                 </div>
                 <div class="profile-container">
                     <div class="profile-avatar">
@@ -116,7 +116,7 @@
                         </div>
                         <div class="stat-item">
                             <span class="stat-value">0</span>
-                            <span class="stat-label">Игр сыграно</span>
+                            <span class="stat-label">Игр</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-value">0</span>
@@ -131,7 +131,7 @@
         <div id="crashGameModal" class="modal">
             <div class="modal-content crash-modal">
                 <div class="modal-header">
-                    <h3>🚀 Crash Game</h3>
+                    <h3>Crash Game</h3>
                     <button class="close-btn" onclick="closeCrashGame()">&times;</button>
                 </div>
                 <div class="crash-game-container">
@@ -141,19 +141,19 @@
                     </div>
                     <div class="crash-controls">
                         <div class="bet-section">
-                            <label>Ставка:</label>
+                            <label>Ставка</label>
                             <input type="number" id="betAmount" value="100" min="10" max="1000">
                         </div>
                         <button id="crashBtn" class="crash-btn" onclick="startCrash()">
                             Играть
                         </button>
                         <button id="cashoutBtn" class="cashout-btn" onclick="cashOut()" disabled>
-                            Забрать
+                            Забрать выигрыш
                         </button>
                     </div>
                     <div class="game-info-panel">
                         <div class="last-crashes">
-                            <span>Последние: </span>
+                            <span>Последние результаты: </span>
                             <span class="crash-history" id="crashHistory">2.45x, 1.23x, 5.67x</span>
                         </div>
                     </div>
