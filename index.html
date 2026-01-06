@@ -78,78 +78,79 @@
                 </div>
             </section>
 
-            <!-- Crash Game Section -->
+            <!-- Crash Game Section - PILOTKA EXACT COPY -->
             <section id="crash" class="section">
-                <div class="crash-game-header">
-                    <button class="back-btn" onclick="showSection('games')">
-                        <span class="back-icon">←</span>
-                        <span class="back-text">Назад</span>
-                    </button>
-                    <h2 class="crash-title">🚀 Crash Game</h2>
-                </div>
-                <div class="crash-game-fullscreen"></div>
-                    <!-- Game Chart Area -->
-                    <div class="game-chart">
-                        <canvas id="gameCanvas" width="340" height="200"></canvas>
-                        <div class="multiplier-display" id="multiplierDisplay">1.00x</div>
-                        <div class="rocket-plane" id="rocketPlane">
-                            <img src="raketa.png" alt="Rocket" class="rocket-img">
+                <div class="crash-game-pilotka">
+                    <!-- Top Bar -->
+                    <div class="pilotka-top-bar">
+                        <div class="pilotka-controls">
+                            <button class="pilotka-sound-btn">🔇</button>
+                            <button class="pilotka-timer-btn">⏱</button>
                         </div>
-                        <div class="game-status" id="gameStatus">Ожидание...</div>
+                        <div class="pilotka-balance">
+                            <span class="pilotka-star">⭐</span>
+                            <span class="pilotka-balance-amount">0</span>
+                            <button class="pilotka-add-btn">+</button>
+                        </div>
                     </div>
-                    
-                    <!-- Betting Controls - PILOTKA STYLE -->
-                    <div class="betting-panel">
-                        <div class="bet-input-section">
-                            <div class="bet-group">
-                                <label>Ставка</label>
-                                <div class="bet-input-wrapper">
-                                    <input type="number" id="betAmount" value="100" min="1" step="1">
-                                    <span class="currency">⭐</span>
-                                </div>
-                            </div>
-                        </div>
+
+                    <!-- Game Area -->
+                    <div class="pilotka-game-area">
+                        <!-- Status and Multiplier -->
+                        <div class="pilotka-status" id="pilotkaStatus">УЛЕТЕЛ!</div>
+                        <div class="pilotka-multiplier" id="pilotkaMultiplier">47.44x</div>
                         
-                        <div class="action-buttons">
-                            <button id="betBtn" class="bet-button" onclick="placeBet()">
-                                <span class="btn-text">Ставка</span>
-                                <span class="btn-amount">⭐ 100</span>
-                            </button>
-                            <button id="cashoutBtn" class="cashout-button" onclick="cashOut()" disabled>
-                                <span class="btn-text">Фрибет</span>
-                                <span class="btn-multiplier">0 ⭐</span>
-                            </button>
+                        <!-- Game Canvas -->
+                        <canvas id="gameCanvas" class="pilotka-canvas"></canvas>
+                        
+                        <!-- Rocket -->
+                        <div class="pilotka-rocket" id="rocketPlane">
+                            <img src="raketa.png" alt="Rocket" class="pilotka-rocket-img">
                         </div>
                     </div>
-                    
-                    <!-- Game History -->
-                    <div class="game-history">
-                        <div class="history-title">История</div>
-                        <div class="history-items" id="historyItems">
-                            <span class="history-item high">5.67x</span>
-                            <span class="history-item medium">2.45x</span>
-                            <span class="history-item low">1.23x</span>
-                            <span class="history-item high">8.91x</span>
-                            <span class="history-item low">1.05x</span>
+
+                    <!-- History -->
+                    <div class="pilotka-history">
+                        <div class="pilotka-tabs">
+                            <button class="pilotka-tab active">Bet</button>
+                            <button class="pilotka-tab">Auto</button>
+                        </div>
+                        <div class="pilotka-history-items" id="pilotkaHistory">
+                            <span class="pilotka-history-item">1.24x</span>
+                            <span class="pilotka-history-item">1.08x</span>
+                            <span class="pilotka-history-item">2.34x</span>
+                            <span class="pilotka-history-item">2.09x</span>
                         </div>
                     </div>
-                    
-                    <!-- Real Players Section -->
-                    <div class="real-players-section">
-                        <div class="players-header">
-                            <div class="players-title">
-                                <span class="title-icon">👥</span>
-                                <span class="title-text">Игроки с вами</span>
-                                <span class="players-count" id="realPlayersCount">1</span>
-                            </div>
-                            <div class="online-indicator">
-                                <span class="online-dot"></span>
-                                <span class="online-text">LIVE</span>
-                            </div>
+
+                    <!-- Betting Panel -->
+                    <div class="pilotka-betting">
+                        <!-- Bet Input -->
+                        <div class="pilotka-bet-input">
+                            <button class="pilotka-minus-btn">−</button>
+                            <input type="number" id="pilotkaAmount" value="100" class="pilotka-amount-input">
+                            <button class="pilotka-plus-btn">+</button>
+                            <button class="pilotka-fav-btn">♡</button>
+                            <button class="pilotka-star-btn">⭐</button>
                         </div>
-                        <div class="real-players-list" id="realPlayersList">
-                            <!-- Реальные игроки будут добавлены динамически -->
+
+                        <!-- Quick Amounts -->
+                        <div class="pilotka-quick-amounts">
+                            <button class="pilotka-quick-btn" onclick="setPilotkaAmount(100)">100</button>
+                            <button class="pilotka-quick-btn" onclick="setPilotkaAmount(200)">200</button>
+                            <button class="pilotka-quick-btn" onclick="setPilotkaAmount(500)">500</button>
+                            <button class="pilotka-quick-btn" onclick="setPilotkaAmount(1000)">1000</button>
                         </div>
+
+                        <!-- Bet Button -->
+                        <button class="pilotka-bet-btn" id="pilotkaBetBtn" onclick="placePilotkaBet()">
+                            Ставка ⭐ 100
+                        </button>
+                    </div>
+
+                    <!-- Players -->
+                    <div class="pilotka-players" id="pilotkaPlayers">
+                        <!-- Players will be added dynamically -->
                     </div>
                 </div>
             </section>
