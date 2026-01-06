@@ -98,32 +98,25 @@
                         <div class="game-status" id="gameStatus">Ожидание...</div>
                     </div>
                     
-                    <!-- Betting Controls -->
+                    <!-- Betting Controls - PILOTKA STYLE -->
                     <div class="betting-panel">
                         <div class="bet-input-section">
                             <div class="bet-group">
                                 <label>Ставка</label>
                                 <div class="bet-input-wrapper">
-                                    <input type="number" id="betAmount" value="10" min="1" step="1">
+                                    <input type="number" id="betAmount" value="100" min="1" step="1">
                                     <span class="currency">⭐</span>
-                                </div>
-                            </div>
-                            <div class="auto-cashout-group">
-                                <label>Авто-вывод</label>
-                                <div class="auto-input-wrapper">
-                                    <input type="number" id="autoCashout" value="2.00" min="1.01" max="1000" step="0.01">
-                                    <span class="multiplier-suffix">x</span>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="action-buttons">
                             <button id="betBtn" class="bet-button" onclick="placeBet()">
-                                <span class="btn-text">Поставить</span>
-                                <span class="btn-amount">10 ⭐</span>
+                                <span class="btn-text">Ставка</span>
+                                <span class="btn-amount">⭐ 100</span>
                             </button>
                             <button id="cashoutBtn" class="cashout-button" onclick="cashOut()" disabled>
-                                <span class="btn-text">Забрать</span>
+                                <span class="btn-text">Фрибет</span>
                                 <span class="btn-multiplier">0 ⭐</span>
                             </button>
                         </div>
