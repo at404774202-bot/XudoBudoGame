@@ -575,41 +575,44 @@ function updateMultiplier() {
 
 function updateRocketPosition() {
     const rocket = document.getElementById('rocketPlane');
-    if (!rocket || !gameState.canvas) return;
+    if (!rocket) return;
     
-    const canvasRect = gameState.canvas.getBoundingClientRect();
-    const containerRect = gameState.canvas.parentElement.getBoundingClientRect();
+    // PILOTKA STYLE ROCKET MOVEMENT
+    const gameArea = document.querySelector('.pilotka-game-area');
+    if (!gameArea) return;
     
-    // Позиция как в pilotka - диагональное движение вверх
+    const containerRect = gameArea.getBoundingClientRect();
+    
+    // Позиция как в pilotka - диагональное движение вверх и вправо
     const progress = Math.min((gameState.multiplier - 1) / (Math.max(gameState.crashPoint, 5) - 1), 1);
     
     // Горизонтальное движение (слева направо)
-    const maxX = containerRect.width - 60;
-    const x = 40 + (maxX - 40) * progress * 0.7; // 70% от ширины
+    const maxX = containerRect.width - 80;
+    const x = 50 + (maxX - 50) * progress * 0.8;
     
-    // Вертикальное движение (снизу вверх) - логарифмическая шкала как в pilotka
-    const maxY = containerRect.height - 40;
-    const minY = 20;
-    const logProgress = Math.log(1 + progress * 9) / Math.log(10); // логарифмическая шкала
+    // Вертикальное движение (снизу вверх) - логарифмическая шкала
+    const maxY = containerRect.height - 60;
+    const minY = 60;
+    const logProgress = Math.log(1 + progress * 9) / Math.log(10);
     const y = maxY - (maxY - minY) * logProgress;
     
     // Поворот ракеты в зависимости от скорости роста множителя
-    const rotationAngle = Math.min(progress * 15 + (gameState.multiplier > 3 ? 5 : 0), 25);
+    const rotationAngle = Math.min(progress * 20 + (gameState.multiplier > 3 ? 10 : 0), 35);
     
     // Масштаб в зависимости от множителя
-    const scale = 1 + Math.min(progress * 0.3, 0.5);
+    const scale = 1 + Math.min(progress * 0.4, 0.6);
     
     rocket.style.left = `${x}px`;
-    rocket.style.top = `${y}px`;
+    rocket.style.bottom = `${y}px`;
     rocket.style.transform = `rotate(${rotationAngle}deg) scale(${scale})`;
     
-    // Эффекты для высоких множителей
+    // Эффекты для высоких множителей как в pilotka
     if (gameState.multiplier > 5) {
         rocket.classList.add('high-multiplier');
-        rocket.style.filter = `brightness(${1.5 + Math.sin(Date.now() * 0.01) * 0.3}) drop-shadow(0 0 ${15 + Math.sin(Date.now() * 0.02) * 5}px rgba(255, 215, 0, 0.8))`;
+        rocket.style.filter = `brightness(${1.8 + Math.sin(Date.now() * 0.015) * 0.4}) drop-shadow(0 0 ${20 + Math.sin(Date.now() * 0.025) * 8}px rgba(255, 107, 53, 1))`;
     } else {
         rocket.classList.remove('high-multiplier');
-        rocket.style.filter = 'brightness(1.1) drop-shadow(0 0 6px rgba(106, 179, 243, 0.6))';
+        rocket.style.filter = 'brightness(1.2) drop-shadow(0 0 10px rgba(255, 107, 53, 0.6))';
     }
 }
 
@@ -719,7 +722,10 @@ function drawChart() {
 }
 
 function updateGameDisplay() {
-    // Обновляем отображение множителя
+    // Обновляем pilotka интерфейс
+    updatePilotkaDisplay();
+    
+    // Обновляем обычный интерфейс (для совместимости)
     const multiplierEl = document.getElementById('multiplierDisplay');
     if (multiplierEl) {
         multiplierEl.textContent = `${gameState.multiplier.toFixed(2)}x`;
@@ -735,12 +741,11 @@ function updateGameDisplay() {
             multiplierEl.style.color = '#FF9800';
             multiplierEl.style.textShadow = '0 0 10px rgba(255, 152, 0, 0.5)';
         } else {
-            multiplierEl.style.color = '#f5f5f5';
-            multiplierEl.style.textShadow = '0 0 20px rgba(106, 179, 243, 0.8)';
+            multiplierEl.style.color = '#ff6b35';
+            multiplierEl.style.textShadow = '0 0 20px rgba(255, 107, 53, 0.8)';
         }
     }
     
-    // Обновляем кнопки
     updateBetButton();
     updateCashoutButton();
     updateBalance();
@@ -1162,3 +1167,289 @@ document.addEventListener('visibilitychange', () => {
 });
 
 console.log('XudoBudoGame script loaded successfully!');
+// PILOTKA INTERFACE FUNCTIONS
+function setPilotkaAmount(amount) {
+    playButtonClick();
+    const input = document.getElementById('pilotkaAmount');
+    if (input) {
+        input.value = amount;
+        updatePilotkaBetButton();
+    }
+}
+
+function updatePilotkaBetButton() {
+    const btn = document.getElementById('pilotkaBetBtn');
+    const input = document.getElementById('pilotkaAmount');
+    
+    if (btn && input) {
+        const amount = parseInt(input.value) || 100;
+        btn.textContent = `Ставка ⭐ ${amount}`;
+    }
+}
+
+function placePilotkaBet() {
+    playButtonClick();
+    
+    if (gameState.gamePhase !== 'betting' || gameState.hasBet) return;
+    
+    const input = document.getElementById('pilotkaAmount');
+    if (!input) return;
+    
+    const betAmount = parseInt(input.value) || 100;
+    
+    if (betAmount < 1) {
+        playErrorSound();
+        return showNotification('⚠️ Минимальная ставка: 1 ⭐');
+    }
+    
+    if (betAmount > gameState.balance) {
+        playErrorSound();
+        return showNotification('⚠️ Недостаточно средств!');
+    }
+    
+    // Делаем ставку
+    gameState.balance -= betAmount;
+    gameState.currentBet = betAmount;
+    gameState.autoCashout = 2.00;
+    gameState.hasBet = true;
+    
+    // Обновляем статус текущего игрока
+    const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
+    if (currentPlayer) {
+        currentPlayer.bet = betAmount;
+        currentPlayer.status = 'betting';
+    }
+    
+    updatePilotkaDisplay();
+    updateRealPlayersDisplay();
+    saveGameStats();
+    
+    // Меняем кнопку на "Забрать"
+    const btn = document.getElementById('pilotkaBetBtn');
+    if (btn) {
+        btn.textContent = 'Забрать';
+        btn.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
+        btn.onclick = cashOutPilotka;
+    }
+    
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    showNotification(`✅ Ставка ${betAmount} ⭐ принята!`);
+}
+
+function cashOutPilotka() {
+    playButtonClick();
+    
+    if (!gameState.hasBet || gameState.gamePhase !== 'flying') return;
+    
+    const winAmount = Math.floor(gameState.currentBet * gameState.multiplier);
+    gameState.balance += winAmount;
+    
+    // Обновляем статистику
+    gameState.stats.gamesPlayed++;
+    gameState.stats.gamesWon++;
+    gameState.stats.totalWinnings += winAmount - gameState.currentBet;
+    gameState.stats.bestMultiplier = Math.max(gameState.stats.bestMultiplier, gameState.multiplier);
+    
+    // Обновляем статус текущего игрока
+    const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
+    if (currentPlayer) {
+        currentPlayer.status = 'cashed';
+        currentPlayer.cashoutMultiplier = gameState.multiplier.toFixed(2);
+    }
+    
+    gameState.hasBet = false;
+    gameState.currentBet = 0;
+    
+    updatePilotkaDisplay();
+    updateRealPlayersDisplay();
+    saveGameStats();
+    
+    // Возвращаем кнопку в исходное состояние
+    const btn = document.getElementById('pilotkaBetBtn');
+    if (btn) {
+        const amount = parseInt(document.getElementById('pilotkaAmount').value) || 100;
+        btn.textContent = `Ставка ⭐ ${amount}`;
+        btn.style.background = 'linear-gradient(135deg, #ff6b35, #f7931e)';
+        btn.onclick = placePilotkaBet;
+    }
+    
+    playCashoutSound();
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    showNotification(`🎉 Выигрыш: ${winAmount} ⭐ (${gameState.multiplier.toFixed(2)}x)`);
+}
+
+function updatePilotkaDisplay() {
+    // Обновляем множитель
+    const multiplierEl = document.getElementById('pilotkaMultiplier');
+    if (multiplierEl) {
+        multiplierEl.textContent = `${gameState.multiplier.toFixed(2)}x`;
+    }
+    
+    // Обновляем статус
+    const statusEl = document.getElementById('pilotkaStatus');
+    if (statusEl) {
+        if (gameState.gamePhase === 'betting') {
+            statusEl.textContent = 'СТАВКИ';
+        } else if (gameState.gamePhase === 'flying') {
+            statusEl.textContent = 'УЛЕТЕЛ!';
+        } else if (gameState.gamePhase === 'crashed') {
+            statusEl.textContent = 'КРАШ!';
+        }
+    }
+    
+    // Обновляем баланс
+    const balanceEl = document.querySelector('.pilotka-balance-amount');
+    if (balanceEl) balanceEl.textContent = gameState.balance.toLocaleString();
+    
+    // Обновляем кнопку ставки
+    updatePilotkaBetButton();
+}
+
+function updatePilotkaHistory() {
+    const historyEl = document.getElementById('pilotkaHistory');
+    if (!historyEl) return;
+    
+    historyEl.innerHTML = '';
+    gameState.gameHistory.forEach(multiplier => {
+        const item = document.createElement('span');
+        item.className = 'pilotka-history-item';
+        item.textContent = `${multiplier.toFixed(2)}x`;
+        
+        // Цвет в зависимости от множителя
+        if (multiplier < 2) {
+            item.style.background = 'rgba(244, 67, 54, 0.8)';
+        } else if (multiplier < 5) {
+            item.style.background = 'rgba(255, 152, 0, 0.8)';
+        } else {
+            item.style.background = 'rgba(76, 175, 80, 0.8)';
+        }
+        
+        historyEl.appendChild(item);
+    });
+}
+
+// Переопределяем функции для pilotka интерфейса
+function initializeCrashGame() {
+    initializeCanvas();
+    updatePilotkaDisplay();
+    updatePilotkaHistory();
+    
+    if (!gameState.currentUser) {
+        initializeCurrentUser();
+        simulateRealPlayersJoining();
+    }
+    
+    if (gameState.gamePhase === 'waiting') startNewRound();
+}
+
+// Обновляем функцию startNewRound для pilotka
+function startNewRound() {
+    gameState.gamePhase = 'betting';
+    gameState.multiplier = 1.00;
+    gameState.curve = [];
+    gameState.crashPoint = generateCrashPoint();
+    gameState.hasBet = false;
+    
+    // Сбрасываем статус всех игроков
+    gameState.realPlayers.forEach(player => {
+        if (player.isCurrentUser) {
+            player.status = 'waiting';
+            player.bet = 0;
+            player.cashoutMultiplier = null;
+        } else {
+            player.status = 'waiting';
+            player.bet = 0;
+            player.cashoutMultiplier = null;
+        }
+    });
+    updateRealPlayersDisplay();
+    
+    const rocket = document.getElementById('rocketPlane');
+    if (rocket) {
+        rocket.classList.remove('flying', 'crashed', 'high-multiplier');
+        rocket.style.left = '50px';
+        rocket.style.bottom = '100px';
+        rocket.style.transform = 'rotate(0deg) scale(1)';
+        rocket.style.filter = 'brightness(1.2) drop-shadow(0 0 10px rgba(255, 107, 53, 0.6))';
+    }
+    
+    updatePilotkaDisplay();
+    let countdown = 5;
+    
+    const interval = setInterval(() => {
+        countdown--;
+        const statusEl = document.getElementById('pilotkaStatus');
+        if (statusEl) statusEl.textContent = `СТАВКИ ${countdown}с`;
+        
+        if (countdown <= 0) {
+            clearInterval(interval);
+            startFlying();
+        }
+    }, 1000);
+}
+
+// Обновляем функцию crashGame для pilotka
+function crashGame() {
+    clearInterval(gameState.gameInterval);
+    gameState.gamePhase = 'crashed';
+    
+    const statusEl = document.getElementById('pilotkaStatus');
+    if (statusEl) statusEl.textContent = `КРАШ ${gameState.crashPoint.toFixed(2)}x`;
+    
+    const rocket = document.getElementById('rocketPlane');
+    if (rocket) {
+        rocket.classList.remove('flying', 'high-multiplier');
+        rocket.classList.add('crashed');
+    }
+    
+    // Если у игрока была ставка и он не успел забрать
+    if (gameState.hasBet) {
+        gameState.stats.gamesPlayed++;
+        
+        const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
+        if (currentPlayer) {
+            currentPlayer.status = 'crashed';
+        }
+        
+        gameState.hasBet = false;
+        gameState.currentBet = 0;
+        
+        // Возвращаем кнопку в исходное состояние
+        const btn = document.getElementById('pilotkaBetBtn');
+        if (btn) {
+            const amount = parseInt(document.getElementById('pilotkaAmount').value) || 100;
+            btn.textContent = `Ставка ⭐ ${amount}`;
+            btn.style.background = 'linear-gradient(135deg, #ff6b35, #f7931e)';
+            btn.onclick = placePilotkaBet;
+        }
+        
+        playCrashSound();
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        showNotification(`💥 Краш на ${gameState.crashPoint.toFixed(2)}x! Ставка проиграна.`);
+    } else {
+        playCrashSound();
+    }
+    
+    // Обновляем статус всех игроков которые не успели забрать
+    gameState.realPlayers.forEach(player => {
+        if (player.status === 'betting') {
+            player.status = 'crashed';
+        }
+    });
+    
+    // Добавляем в историю
+    gameState.gameHistory.unshift(gameState.crashPoint);
+    if (gameState.gameHistory.length > 10) gameState.gameHistory.pop();
+    updatePilotkaHistory();
+    
+    updatePilotkaDisplay();
+    updateRealPlayersDisplay();
+    saveGameStats();
+    
+    // Начинаем новый раунд через 3 секунды
+    setTimeout(() => {
+        startNewRound();
+    }, 3000);
+}
+
+console.log('Pilotka interface functions loaded!');
