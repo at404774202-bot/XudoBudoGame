@@ -1,11 +1,11 @@
 // XudoBudo Crash Game - Telegram Mini App
 let tg = window.Telegram?.WebApp || {
-    expand: () => console.log('TG: expand'),
-    ready: () => console.log('TG: ready'),
-    close: () => console.log('TG: close'),
+    expand: () => {},
+    ready: () => {},
+    close: () => {},
     HapticFeedback: {
-        impactOccurred: (type) => console.log('TG: haptic', type),
-        notificationOccurred: (type) => console.log('TG: notification', type)
+        impactOccurred: () => {},
+        notificationOccurred: () => {}
     },
     BackButton: { show: () => {}, hide: () => {} },
     colorScheme: 'dark'
@@ -49,35 +49,19 @@ function playSound(frequency, duration, type = 'sine', volume = 0.1) {
     }
 }
 
-function playButtonClick() {
-    playSound(800, 0.1, 'square', 0.05);
-}
-
-function playBetSound() {
-    playSound(600, 0.2, 'sine', 0.08);
-}
-
-function playCashoutSound() {
-    playSound(800, 0.3, 'triangle', 0.1);
-}
-
-function playCrashSound() {
-    playSound(200, 0.5, 'sawtooth', 0.15);
-}
+function playButtonClick() { playSound(800, 0.1, 'square', 0.05); }
+function playBetSound() { playSound(600, 0.2, 'sine', 0.08); }
+function playCashoutSound() { playSound(800, 0.3, 'triangle', 0.1); }
+function playCrashSound() { playSound(200, 0.5, 'sawtooth', 0.15); }
 function toggleSound() {
     soundEnabled = !soundEnabled;
-    const btn = document.getElementById('soundToggle');
-    const crashBtn = document.getElementById('crashSoundBtn');
+    const buttons = ['soundToggle', 'crashSoundBtn'];
     
-    [btn, crashBtn].forEach(button => {
-        if (button) {
-            if (soundEnabled) {
-                button.innerHTML = '🔊';
-                button.classList.remove('muted');
-            } else {
-                button.innerHTML = '🔇';
-                button.classList.add('muted');
-            }
+    buttons.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.innerHTML = soundEnabled ? '🔊' : '🔇';
+            btn.classList.toggle('muted', !soundEnabled);
         }
     });
     
@@ -87,7 +71,6 @@ function toggleSound() {
 // Crash Game State
 let crashGame = {
     balance: 1000,
-    isPlaying: false,
     gamePhase: 'waiting', // waiting, betting, flying, crashed
     multiplier: 1.00,
     currentBet: 0,
@@ -158,7 +141,6 @@ function startNewRound() {
 }
 
 function generateCrashPoint() {
-    // Crash game algorithm - realistic distribution
     const random = Math.random();
     if (random < 0.5) return 1.00 + Math.random() * 1.5; // 1.00-2.50x (50%)
     if (random < 0.8) return 2.50 + Math.random() * 2.5; // 2.50-5.00x (30%)
@@ -180,7 +162,6 @@ function startFlying() {
         rocket.classList.add('flying');
     }
     
-    // Start multiplier animation
     animateMultiplier();
 }
 
@@ -188,10 +169,10 @@ function animateMultiplier() {
     if (crashGame.gamePhase !== 'flying') return;
     
     const elapsed = (Date.now() - crashGame.startTime) / 1000;
-    crashGame.multiplier = 1.00 + elapsed * 0.5; // Increase by 0.5x per second
+    crashGame.multiplier = 1.00 + elapsed * 0.5;
     
     // Update rocket position
-    const progress = Math.min(elapsed / 10, 1); // 10 seconds to reach top
+    const progress = Math.min(elapsed / 10, 1);
     crashGame.rocketPosition.x = 50 + progress * 200;
     crashGame.rocketPosition.y = 80 - progress * 60;
     
@@ -200,7 +181,6 @@ function animateMultiplier() {
         rocket.style.left = crashGame.rocketPosition.x + 'px';
         rocket.style.bottom = crashGame.rocketPosition.y + '%';
         
-        // High multiplier effects
         if (crashGame.multiplier > 5.0) {
             rocket.classList.add('high-multiplier');
         }
@@ -220,7 +200,6 @@ function animateMultiplier() {
         return;
     }
     
-    // Continue animation
     crashGame.animationId = requestAnimationFrame(animateMultiplier);
 }
 
@@ -262,6 +241,7 @@ function crashRocket() {
     }, 3000);
 }
 
+// Betting Functions
 function placeBet() {
     if (crashGame.gamePhase !== 'betting') return;
     
@@ -301,6 +281,7 @@ function cashOut() {
     showNotification(`🎉 Выиграно ${winAmount} ⭐ на ${crashGame.multiplier.toFixed(2)}x!`);
     updateCrashDisplay();
 }
+
 function adjustBet(amount) {
     const input = document.getElementById('betAmount');
     if (input) {
@@ -330,16 +311,14 @@ function setBetAmount(amount) {
     }
     playButtonClick();
 }
-
+// Display Update Functions
 function updateCrashDisplay() {
-    // Update balance displays
-    const balanceElements = ['headerBalance', 'crashBalance', 'profileBalance'];
+    const balanceElements = ['headerBalance', 'crashBalance', 'profileBalance', 'currentBalance'];
     balanceElements.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = crashGame.balance.toLocaleString();
     });
     
-    // Update bet button amount
     const betInput = document.getElementById('betAmount');
     if (betInput) {
         const btnAmount = document.getElementById('betBtnAmount');
@@ -410,12 +389,7 @@ function getStatusText(status) {
     }
 }
 
-// Modal functions
-function openTopUpModal() {
-    playButtonClick();
-    showNotification('💰 Пополнение баланса недоступно в демо версии');
-}
-
+// Modal Functions
 function openPromoModal() {
     playButtonClick();
     const modal = document.getElementById('promoModal');
@@ -434,7 +408,7 @@ function closePromoModal() {
     }
 }
 
-function activatePromo() {
+function activatePromoCode() {
     const input = document.getElementById('promoInput');
     if (!input) return;
     
@@ -454,11 +428,47 @@ function activatePromo() {
         closePromoModal();
         updateCrashDisplay();
         playBetSound();
+        saveGameData();
     } else {
         showNotification('❌ Неверный промокод');
     }
 }
 
+function openTopUpModal() {
+    playButtonClick();
+    const modal = document.getElementById('topUpModal');
+    if (modal) {
+        modal.classList.add('active');
+        modal.style.display = 'flex';
+    }
+}
+
+function closeTopUpModal() {
+    playButtonClick();
+    const modal = document.getElementById('topUpModal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
+}
+
+function setQuickAmount(amount) {
+    playButtonClick();
+    const input = document.getElementById('topUpAmount');
+    if (input) {
+        input.value = amount;
+    }
+    showNotification(`Выбрано ${amount} ⭐`);
+}
+
+function purchaseFromInput() {
+    playButtonClick();
+    const input = document.getElementById('topUpAmount');
+    const amount = input ? parseInt(input.value) || 100 : 100;
+    showNotification(`💰 Покупка ${amount} ⭐ недоступна в демо версии`);
+}
+
+// Utility Functions
 function showNotification(message) {
     const notification = document.createElement('div');
     notification.className = 'notification';
@@ -519,111 +529,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Auto-save game data periodically
-setInterval(saveGameData, 10000); // Save every 10 seconds
-// Missing functions for HTML buttons
-
-function closeTopUpModal() {
-    playButtonClick();
-    const modal = document.getElementById('topUpModal');
-    if (modal) {
-        modal.classList.remove('active');
-        modal.style.display = 'none';
-    }
-}
-
-function setQuickAmount(amount) {
-    playButtonClick();
-    const input = document.getElementById('topUpAmount');
-    if (input) {
-        input.value = amount;
-    }
-    showNotification(`Выбрано ${amount} ⭐`);
-}
-
-function purchaseFromInput() {
-    playButtonClick();
-    const input = document.getElementById('topUpAmount');
-    const amount = input ? parseInt(input.value) || 100 : 100;
-    
-    // Simulate purchase (in real app would use Telegram Stars)
-    showNotification(`💰 Покупка ${amount} ⭐ недоступна в демо версии`);
-}
-
-function activatePromoCode() {
-    const input = document.getElementById('promoInput');
-    if (!input) return;
-    
-    const code = input.value.toUpperCase().trim();
-    const promoCodes = {
-        'START': 500,
-        'BONUS': 1000,
-        'WELCOME': 250,
-        'GAME': 750,
-        'CRASH': 300
-    };
-    
-    if (promoCodes[code]) {
-        crashGame.balance += promoCodes[code];
-        showNotification(`🎉 Промокод активирован! +${promoCodes[code]} ⭐`);
-        input.value = '';
-        closePromoModal();
-        updateCrashDisplay();
-        playBetSound();
-        saveGameData();
-    } else {
-        showNotification('❌ Неверный промокод');
-    }
-}
-
-// Fix the existing openTopUpModal function
-function openTopUpModal() {
-    playButtonClick();
-    const modal = document.getElementById('topUpModal');
-    if (modal) {
-        modal.classList.add('active');
-        modal.style.display = 'flex';
-    }
-}
-// Additional missing functions for bet adjustment buttons
-
-// These functions should already exist but let's make sure they work with current HTML structure
-function adjustBet(amount) {
-    const input = document.getElementById('betAmount');
-    if (input) {
-        const currentValue = parseInt(input.value) || 100;
-        const newValue = Math.max(10, Math.min(10000, currentValue + amount));
-        input.value = newValue;
-        
-        // Update button display
-        const btnAmount = document.getElementById('betBtnAmount');
-        if (btnAmount) {
-            btnAmount.textContent = `${newValue} ⭐`;
-        }
-    }
-    playButtonClick();
-}
-
-function adjustAutoCashout(amount) {
-    const input = document.getElementById('autoCashout');
-    if (input) {
-        const currentValue = parseFloat(input.value) || 2.00;
-        const newValue = Math.max(1.01, Math.min(100, currentValue + amount));
-        input.value = newValue.toFixed(2);
-    }
-    playButtonClick();
-}
-
-// Make sure balance updates work correctly
-function updateBalance() {
-    const balanceElements = ['headerBalance', 'crashBalance', 'profileBalance'];
-    balanceElements.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = crashGame.balance.toLocaleString();
-    });
-}
-
-// Initialize balance display on page load
-function initializeBalanceDisplay() {
-    updateBalance();
-    updateCrashDisplay();
-}
+setInterval(saveGameData, 10000);
