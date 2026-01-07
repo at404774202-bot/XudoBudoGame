@@ -57,48 +57,41 @@
                 </div>
             </section>
 
-            <!-- Crash Game Section -->
+            <!-- Crash Game Section - ОПТИМИЗИРОВАННАЯ ВЕРСИЯ -->
             <section id="crash" class="section">
-                <div class="crash-game">
-                    <!-- Header -->
-                    <div class="crash-header">
-                        <button class="back-button" onclick="showSection('games')">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                            </svg>
-                            Назад
+                <div class="crash-game-optimized">
+                    <!-- Компактный Header -->
+                    <div class="crash-header-compact">
+                        <button class="back-button-compact" onclick="showSection('games')">
+                            <span class="back-icon">←</span>
                         </button>
-                        <div class="balance-display">
+                        <div class="balance-compact">
                             <span class="balance-icon">⭐</span>
                             <span class="balance-value" id="crashBalance">1,000</span>
                         </div>
-                        <button class="sound-toggle" onclick="toggleSound()" id="crashSoundBtn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                            </svg>
-                        </button>
+                        <button class="sound-toggle-compact" onclick="toggleSound()" id="crashSoundBtn">🔊</button>
                     </div>
 
-                    <!-- Game Area -->
-                    <div class="game-area" id="crashGameArea">
-                        <div class="game-status" id="crashStatus">Ожидание раунда...</div>
-                        <div class="multiplier-display" id="crashMultiplier">1.00x</div>
-                        
-                        <!-- Game Canvas -->
-                        <canvas id="crashCanvas" class="game-canvas"></canvas>
-                        
-                        <!-- Rocket -->
-                        <div class="rocket-container" id="crashRocket">
-                            <img src="raketa.png" alt="Rocket" class="rocket-sprite">
-                            <div class="rocket-trail"></div>
-                            <div class="rocket-glow"></div>
+                    <!-- Основная игровая область - ПОЛНОЭКРАННАЯ -->
+                    <div class="game-area-fullscreen" id="crashGameArea">
+                        <!-- Статус игры - компактный -->
+                        <div class="game-status-compact" id="crashStatus">
+                            <span class="status-text">Ожидание раунда</span>
+                            <div class="countdown-timer" id="countdownTimer">5</div>
                         </div>
-                    </div>
-
-                    <!-- Game History -->
-                    <div class="game-history">
-                        <div class="history-label">История</div>
-                        <div class="history-items" id="crashHistory">
+                        
+                        <!-- ГЛАВНЫЙ МНОЖИТЕЛЬ - увеличен и центрирован -->
+                        <div class="multiplier-display-mega" id="crashMultiplier">1.00x</div>
+                        
+                        <!-- Ракета с улучшенной анимацией -->
+                        <div class="rocket-container-enhanced" id="crashRocket">
+                            <img src="raketa.png" alt="Rocket" class="rocket-sprite">
+                            <div class="rocket-trail-enhanced"></div>
+                            <div class="rocket-glow-enhanced"></div>
+                        </div>
+                        
+                        <!-- Компактная история - только последние 5 -->
+                        <div class="history-compact" id="crashHistory">
                             <div class="history-item medium">2.45x</div>
                             <div class="history-item low">1.23x</div>
                             <div class="history-item high">5.67x</div>
@@ -107,65 +100,64 @@
                         </div>
                     </div>
 
-                    <!-- Betting Panel -->
-                    <div class="betting-panel">
-                        <div class="bet-controls">
-                            <div class="bet-input-group">
-                                <div class="input-label">Ставка</div>
-                                <div class="amount-input">
-                                    <button class="amount-btn" onclick="adjustBet(-10)">-</button>
-                                    <input type="number" id="betAmount" value="100" min="10" max="10000">
-                                    <button class="amount-btn" onclick="adjustBet(10)">+</button>
-                                </div>
-                            </div>
-                            <div class="bet-input-group">
-                                <div class="input-label">Авто-вывод</div>
-                                <div class="amount-input">
-                                    <button class="amount-btn" onclick="adjustAutoCashout(-0.1)">-</button>
-                                    <input type="number" id="autoCashout" value="2.00" min="1.01" max="100" step="0.01">
-                                    <button class="amount-btn" onclick="adjustAutoCashout(0.1)">+</button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="quick-bets">
-                            <button class="quick-bet" onclick="setBetAmount(50)">50 ⭐</button>
-                            <button class="quick-bet" onclick="setBetAmount(100)">100 ⭐</button>
-                            <button class="quick-bet" onclick="setBetAmount(250)">250 ⭐</button>
-                            <button class="quick-bet" onclick="setBetAmount(500)">500 ⭐</button>
-                        </div>
-
-                        <div class="action-buttons">
-                            <button class="bet-button" id="betBtn" onclick="placeBet()">
-                                <div class="button-content">
-                                    <div class="button-text">Поставить</div>
-                                    <div class="button-amount" id="betBtnAmount">100 ⭐</div>
-                                </div>
+                    <!-- ОПТИМИЗИРОВАННАЯ панель ставок -->
+                    <div class="betting-panel-optimized">
+                        <!-- Быстрые ставки - УВЕЛИЧЕНЫ -->
+                        <div class="quick-bets-enhanced">
+                            <button class="quick-bet-large" onclick="setBetAmount(50)" data-amount="50">
+                                <span class="bet-amount">50</span>
+                                <span class="bet-currency">⭐</span>
                             </button>
-                            <button class="cashout-button" id="cashoutBtn" onclick="cashOut()" disabled>
-                                <div class="button-content">
-                                    <div class="button-text">Забрать</div>
-                                    <div class="button-amount" id="cashoutBtnAmount">0 ⭐</div>
-                                </div>
+                            <button class="quick-bet-large" onclick="setBetAmount(100)" data-amount="100">
+                                <span class="bet-amount">100</span>
+                                <span class="bet-currency">⭐</span>
+                            </button>
+                            <button class="quick-bet-large" onclick="setBetAmount(250)" data-amount="250">
+                                <span class="bet-amount">250</span>
+                                <span class="bet-currency">⭐</span>
+                            </button>
+                            <button class="quick-bet-large" onclick="setBetAmount(500)" data-amount="500">
+                                <span class="bet-amount">500</span>
+                                <span class="bet-currency">⭐</span>
                             </button>
                         </div>
-                    </div>
 
-                    <!-- Players Section -->
-                    <div class="players-section">
-                        <div class="players-header">
-                            <div class="players-title">
-                                <span class="players-icon">👥</span>
-                                <span class="title-text">Игроки</span>
-                                <span class="players-count" id="playersCount">12</span>
+                        <!-- Настройки ставки - КОМПАКТНЫЕ -->
+                        <div class="bet-settings-compact">
+                            <div class="bet-input-enhanced">
+                                <label>Ставка</label>
+                                <div class="input-with-controls">
+                                    <button class="control-btn-large" onclick="adjustBet(-10)">−</button>
+                                    <input type="number" id="betAmount" value="100" min="10" max="10000" class="bet-input-large">
+                                    <button class="control-btn-large" onclick="adjustBet(10)">+</button>
+                                </div>
                             </div>
-                            <div class="online-indicator">
-                                <div class="online-dot"></div>
-                                <span class="online-text">Online</span>
+                            <div class="auto-cashout-enhanced">
+                                <label>Авто-вывод</label>
+                                <div class="input-with-controls">
+                                    <button class="control-btn-large" onclick="adjustAutoCashout(-0.1)">−</button>
+                                    <input type="number" id="autoCashout" value="2.00" min="1.01" max="100" step="0.01" class="cashout-input-large">
+                                    <button class="control-btn-large" onclick="adjustAutoCashout(0.1)">+</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="players-list" id="playersList">
-                            <!-- Players will be added dynamically -->
+
+                        <!-- ГЛАВНЫЕ кнопки действий - МАКСИМАЛЬНО УДОБНЫЕ -->
+                        <div class="action-buttons-mega">
+                            <button class="bet-button-mega" id="betBtn" onclick="placeBet()">
+                                <div class="button-content-mega">
+                                    <span class="button-icon">🚀</span>
+                                    <span class="button-text-large">ПОСТАВИТЬ</span>
+                                    <span class="button-amount-large" id="betBtnAmount">100 ⭐</span>
+                                </div>
+                            </button>
+                            <button class="cashout-button-mega" id="cashoutBtn" onclick="cashOut()" disabled>
+                                <div class="button-content-mega">
+                                    <span class="button-icon">💰</span>
+                                    <span class="button-text-large">ЗАБРАТЬ</span>
+                                    <span class="button-amount-large" id="cashoutBtnAmount">0 ⭐</span>
+                                </div>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -222,7 +214,7 @@
                 </div>
                 <div class="modal-body">
                     <input type="text" id="promoInput" placeholder="Введите промокод">
-                    <button onclick="activatePromo()">Активировать</button>
+                    <button onclick="activatePromoCode()">Активировать</button>
                 </div>
             </div>
         </div>
@@ -238,13 +230,13 @@
                         Текущий баланс: <span id="currentBalance">1,000</span> ⭐
                     </div>
                     <div class="amount-buttons">
-                        <button onclick="setTopUpAmount(100)">100 ⭐</button>
-                        <button onclick="setTopUpAmount(500)">500 ⭐</button>
-                        <button onclick="setTopUpAmount(1000)">1,000 ⭐</button>
-                        <button onclick="setTopUpAmount(2500)">2,500 ⭐</button>
+                        <button onclick="setQuickAmount(100)">100 ⭐</button>
+                        <button onclick="setQuickAmount(500)">500 ⭐</button>
+                        <button onclick="setQuickAmount(1000)">1,000 ⭐</button>
+                        <button onclick="setQuickAmount(2500)">2,500 ⭐</button>
                     </div>
                     <input type="number" id="topUpAmount" placeholder="Или введите сумму">
-                    <button onclick="purchaseStars()">Пополнить</button>
+                    <button onclick="purchaseFromInput()">Пополнить</button>
                 </div>
             </div>
         </div>
