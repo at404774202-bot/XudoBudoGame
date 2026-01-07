@@ -1,5 +1,4 @@
-// XudoBudoGame - Complete Telegram Mini App
-// Telegram Web App initialization
+// Rocket Flight Game - Telegram Mini App
 let tg = window.Telegram?.WebApp || {
     expand: () => console.log('TG: expand'),
     ready: () => console.log('TG: ready'),
@@ -14,15 +13,6 @@ let tg = window.Telegram?.WebApp || {
         bg_color: '#17212b', text_color: '#f5f5f5', hint_color: '#708499',
         link_color: '#6ab3f3', button_color: '#5288c1', button_text_color: '#ffffff',
         secondary_bg_color: '#232e3c'
-    },
-    onEvent: (event, callback) => console.log('TG: event listener', event),
-    openTelegramLink: (url) => console.log('TG: open link', url),
-    openInvoice: (url, callback) => {
-        console.log('TG: open invoice', url);
-        if (callback) callback({ status: 'paid' });
-    },
-    initDataUnsafe: {
-        user: { id: 123456789, first_name: 'Player', username: 'player123' }
     }
 };
 
@@ -33,7 +23,8 @@ let soundEnabled = true;
 function initAudioContext() {
     if (!audioContext) {
         try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+            audioContext = new AudioContextClass();
         } catch (e) {
             console.log('Audio not supported');
         }
@@ -68,227 +59,62 @@ function playButtonClick() {
     playSound(800, 0.1, 'square', 0.05);
 }
 
-function playCrashSound() {
-    playSound(200, 0.3, 'sawtooth', 0.1);
-    setTimeout(() => playSound(100, 0.2, 'triangle', 0.08), 100);
-}
-
-function playCashoutSound() {
+function playCollectSound() {
     playSound(600, 0.2, 'sine', 0.08);
     setTimeout(() => playSound(800, 0.15, 'sine', 0.06), 150);
 }
 
-function playSuccessSound() {
-    playSound(523, 0.15, 'sine', 0.06);
-    setTimeout(() => playSound(659, 0.15, 'sine', 0.06), 150);
-    setTimeout(() => playSound(784, 0.2, 'sine', 0.08), 300);
-}
-
-function playErrorSound() {
-    playSound(300, 0.2, 'sawtooth', 0.08);
-    setTimeout(() => playSound(200, 0.3, 'sawtooth', 0.1), 200);
+function playGameOverSound() {
+    playSound(200, 0.3, 'sawtooth', 0.1);
+    setTimeout(() => playSound(100, 0.2, 'triangle', 0.08), 100);
 }
 
 function toggleSound() {
     soundEnabled = !soundEnabled;
     const btn = document.getElementById('soundToggle');
-    const crashBtn = document.getElementById('crashSoundBtn');
+    const gameBtn = document.getElementById('gameSoundBtn');
     
-    [btn, crashBtn].forEach(button => {
+    [btn, gameBtn].forEach(button => {
         if (button) {
-            const icon = button.querySelector('.sound-icon') || button.querySelector('svg');
             if (soundEnabled) {
+                button.textContent = '🔊';
                 button.classList.remove('muted');
-                if (icon && icon.textContent !== undefined) icon.textContent = '🔊';
             } else {
+                button.textContent = '🔇';
                 button.classList.add('muted');
-                if (icon && icon.textContent !== undefined) icon.textContent = '🔇';
             }
         }
     });
     
-    if (soundEnabled) playSuccessSound();
-    localStorage.setItem('xudobudo_sound', soundEnabled.toString());
-}
-
-function loadSoundSettings() {
-    const saved = localStorage.getItem('xudobudo_sound');
-    if (saved !== null) {
-        soundEnabled = saved === 'true';
-        const btn = document.getElementById('soundToggle');
-        const crashBtn = document.getElementById('crashSoundBtn');
-        
-        [btn, crashBtn].forEach(button => {
-            if (button) {
-                const icon = button.querySelector('.sound-icon') || button.querySelector('svg');
-                if (soundEnabled) {
-                    button.classList.remove('muted');
-                    if (icon && icon.textContent !== undefined) icon.textContent = '🔊';
-                } else {
-                    button.classList.add('muted');
-                    if (icon && icon.textContent !== undefined) icon.textContent = '🔇';
-                }
-            }
-        });
-    }
-}
-
-function getUserData() {
-    if (tg.initDataUnsafe?.user) {
-        return {
-            id: tg.initDataUnsafe.user.id,
-            firstName: tg.initDataUnsafe.user.first_name || 'Player',
-            lastName: tg.initDataUnsafe.user.last_name || '',
-            username: tg.initDataUnsafe.user.username || 'player123',
-            photoUrl: tg.initDataUnsafe.user.photo_url || '',
-            languageCode: tg.initDataUnsafe.user.language_code || 'ru'
-        };
-    }
-    return { 
-        id: 123456789, 
-        firstName: 'Player', 
-        lastName: '',
-        username: 'player123', 
-        photoUrl: '',
-        languageCode: 'ru'
-    };
+    localStorage.setItem('rocket_sound', soundEnabled.toString());
 }
 
 // Game State
 let gameState = {
-    balance: 1000, currentBet: 0, autoCashout: 2.00, hasBet: false,
-    multiplier: 1.00, crashPoint: 0, gamePhase: 'waiting',
-    gameInterval: null, gameStartTime: 0, canvas: null, ctx: null,
-    curve: [], gameHistory: [5.67, 2.45, 1.23, 8.91, 1.05],
-    stats: { gamesPlayed: 0, gamesWon: 0, totalWinnings: 0, bestMultiplier: 0 },
-    realPlayers: [], currentUser: null
+    balance: 1000,
+    isPlaying: false,
+    isPaused: false,
+    score: 0,
+    multiplier: 1.0,
+    gameSpeed: 1,
+    canvas: null,
+    ctx: null,
+    rocket: {
+        x: 0,
+        y: 0,
+        width: 40,
+        height: 40,
+        velocityY: 0,
+        thrust: 0.5,
+        gravity: 0.3,
+        maxVelocity: 8
+    },
+    multipliers: [],
+    particles: [],
+    gameTime: 0,
+    lastTime: 0,
+    animationId: null
 };
-
-// Real Players System
-function initializeCurrentUser() {
-    gameState.currentUser = getUserData();
-    
-    const currentPlayer = {
-        id: gameState.currentUser.id,
-        firstName: gameState.currentUser.firstName,
-        lastName: gameState.currentUser.lastName,
-        username: gameState.currentUser.username,
-        photoUrl: gameState.currentUser.photoUrl,
-        languageCode: gameState.currentUser.languageCode,
-        bet: 0,
-        status: 'waiting',
-        cashoutMultiplier: null,
-        isCurrentUser: true,
-        joinTime: Date.now()
-    };
-    
-    gameState.realPlayers = [currentPlayer];
-    updateCrashPlayersDisplay();
-}
-
-function updateCrashPlayersDisplay() {
-    const container = document.getElementById('crashPlayersList');
-    const countEl = document.getElementById('crashOnlineCount');
-    
-    if (!container) return;
-    
-    container.innerHTML = '';
-    if (countEl) countEl.textContent = gameState.realPlayers.length;
-    
-    const sortedPlayers = [...gameState.realPlayers].sort((a, b) => {
-        if (a.isCurrentUser) return -1;
-        if (b.isCurrentUser) return 1;
-        return a.joinTime - b.joinTime;
-    });
-    
-    sortedPlayers.forEach(player => {
-        const item = document.createElement('div');
-        item.className = `real-player-item ${player.isCurrentUser ? 'current-user' : ''}`;
-        
-        let statusText = 'Ждет', statusClass = 'waiting';
-        if (player.status === 'betting' && player.bet > 0) {
-            statusText = `${player.bet} ⭐`;
-            statusClass = 'betting';
-        } else if (player.status === 'cashed') {
-            statusText = `${player.cashoutMultiplier}x`;
-            statusClass = 'cashed';
-        } else if (player.status === 'crashed') {
-            statusText = 'Краш';
-            statusClass = 'crashed';
-        }
-        
-        const displayName = player.firstName + (player.lastName ? ` ${player.lastName}` : '');
-        const initials = (player.firstName.charAt(0) + (player.lastName ? player.lastName.charAt(0) : '')).toUpperCase();
-        
-        let avatarHtml = '';
-        if (player.photoUrl) {
-            avatarHtml = `
-                <img src="${player.photoUrl}" alt="${displayName}" class="real-player-avatar" 
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="real-player-avatar-placeholder" style="display:none;">${initials}</div>
-            `;
-        } else {
-            avatarHtml = `<div class="real-player-avatar-placeholder">${initials}</div>`;
-        }
-        
-        const countryFlags = {
-            'ru': '🇷🇺', 'uk': '🇺🇦', 'be': '🇧🇾', 'kk': '🇰🇿', 'uz': '🇺🇿', 'ky': '🇰🇬',
-            'en': '🇺🇸', 'de': '🇩🇪', 'fr': '🇫🇷', 'es': '🇪🇸', 'it': '🇮🇹'
-        };
-        const countryFlag = countryFlags[player.languageCode] || countryFlags['ru'];
-        
-        item.innerHTML = `
-            <div class="real-player-avatar-container">
-                ${avatarHtml}
-                <div class="country-flag">${countryFlag}</div>
-            </div>
-            <div class="real-player-info">
-                <div class="real-player-name">${displayName}</div>
-                <div class="real-player-username">@${player.username}</div>
-            </div>
-            <div class="real-player-status">
-                <span class="player-status ${statusClass}">${statusText}</span>
-            </div>
-        `;
-        
-        container.appendChild(item);
-    });
-}
-
-function updateRealPlayersStatus() {
-    gameState.realPlayers.forEach(player => {
-        if (player.status === 'betting' && !player.isCurrentUser && Math.random() < 0.08 && gameState.multiplier > 1.2) {
-            player.status = 'cashed';
-            player.cashoutMultiplier = gameState.multiplier.toFixed(2);
-        }
-    });
-    updateCrashPlayersDisplay();
-}
-
-function applyTelegramTheme() {
-    if (tg.themeParams) {
-        const root = document.documentElement;
-        Object.entries(tg.themeParams).forEach(([key, value]) => {
-            root.style.setProperty(`--tg-theme-${key.replace('_', '-')}`, value);
-        });
-    }
-}
-
-function loadSavedBalance() {
-    try {
-        const saved = localStorage.getItem('xudobudo_balance');
-        if (saved) gameState.balance = Math.max(1, Math.min(parseInt(saved), 1000000));
-        const stats = localStorage.getItem('xudobudo_stats');
-        if (stats) gameState.stats = { ...gameState.stats, ...JSON.parse(stats) };
-    } catch (e) { console.log('Load error:', e); }
-}
-
-function saveGameStats() {
-    try {
-        localStorage.setItem('xudobudo_balance', gameState.balance.toString());
-        localStorage.setItem('xudobudo_stats', JSON.stringify(gameState.stats));
-    } catch (e) { console.log('Save error:', e); }
-}
 
 // Navigation
 function showSection(sectionName) {
@@ -298,757 +124,436 @@ function showSection(sectionName) {
     document.getElementById(sectionName).classList.add('active');
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     
-    if (sectionName === 'crash') {
+    if (sectionName === 'rocket') {
         document.querySelector(`[onclick="showSection('games')"]`).classList.add('active');
+        initializeGame();
     } else {
         const navBtn = document.querySelector(`[onclick="showSection('${sectionName}')"]`);
         if (navBtn) navBtn.classList.add('active');
     }
     
     if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+}
+
+// Game Initialization
+function initializeGame() {
+    const canvas = document.getElementById('gameCanvas');
+    if (!canvas) return;
     
-    if (sectionName === 'crash') {
-        initializeCrashGame();
+    gameState.canvas = canvas;
+    gameState.ctx = canvas.getContext('2d');
+    
+    // Set canvas size
+    const gameArea = document.getElementById('gameArea');
+    const rect = gameArea.getBoundingClientRect();
+    
+    canvas.width = rect.width;
+    canvas.height = 400;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = '400px';
+    
+    // Initialize rocket position
+    gameState.rocket.x = canvas.width / 2 - gameState.rocket.width / 2;
+    gameState.rocket.y = canvas.height - gameState.rocket.height - 20;
+    
+    // Add touch/click controls
+    canvas.addEventListener('touchstart', handleInput);
+    canvas.addEventListener('mousedown', handleInput);
+    canvas.addEventListener('touchend', handleInputEnd);
+    canvas.addEventListener('mouseup', handleInputEnd);
+    
+    // Prevent default touch behavior
+    canvas.addEventListener('touchmove', (e) => e.preventDefault());
+    
+    updateDisplay();
+    drawGame();
+}
+
+function handleInput(e) {
+    e.preventDefault();
+    if (gameState.isPlaying && !gameState.isPaused) {
+        gameState.rocket.velocityY = -gameState.rocket.thrust * gameState.gameSpeed;
+        playSound(400, 0.1, 'square', 0.03);
     }
 }
 
-// MODERN CRASH GAME FUNCTIONS
-function initializeCrashGame() {
-    initializeCanvas();
-    updateModernGameDisplay();
-    
-    if (!gameState.currentUser) {
-        initializeCurrentUser();
-    }
-    
-    const modernGame = document.querySelector('.crash-game-modern');
-    if (modernGame) {
-        modernGame.classList.add('active');
-    }
-    
-    initializeTabs();
-    
-    if (gameState.gamePhase === 'waiting') startNewRound();
-}
-
-function initializeTabs() {
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            playButtonClick();
-            
-            tabBtns.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
-            
-            btn.classList.add('active');
-            const targetTab = btn.getAttribute('data-tab');
-            const targetContent = document.getElementById(`${targetTab}-tab`);
-            if (targetContent) {
-                targetContent.classList.add('active');
-            }
-        });
-    });
-}
-
-function updateModernGameDisplay() {
-    const multiplierEl = document.getElementById('crashMultiplier');
-    if (multiplierEl) {
-        multiplierEl.textContent = `${gameState.multiplier.toFixed(2)}x`;
-        
-        if (gameState.multiplier >= 10) {
-            multiplierEl.style.color = '#FFD700';
-            multiplierEl.style.textShadow = '0 0 40px rgba(255, 215, 0, 1)';
-        } else if (gameState.multiplier >= 5) {
-            multiplierEl.style.color = '#4CAF50';
-            multiplierEl.style.textShadow = '0 0 35px rgba(76, 175, 80, 0.8)';
-        } else if (gameState.multiplier >= 2) {
-            multiplierEl.style.color = '#FF9800';
-            multiplierEl.style.textShadow = '0 0 30px rgba(255, 152, 0, 0.7)';
-        } else {
-            multiplierEl.style.color = '#ff6b35';
-            multiplierEl.style.textShadow = '0 0 30px rgba(255, 107, 53, 0.8)';
-        }
-    }
-    
-    const statusEl = document.getElementById('crashStatusText');
-    const timerEl = document.getElementById('crashTimer');
-    
-    if (statusEl) {
-        if (gameState.gamePhase === 'betting') {
-            statusEl.textContent = 'Прием ставок';
-        } else if (gameState.gamePhase === 'flying') {
-            statusEl.textContent = 'Ракета летит!';
-        } else if (gameState.gamePhase === 'crashed') {
-            statusEl.textContent = `Краш на ${gameState.crashPoint.toFixed(2)}x`;
-        } else {
-            statusEl.textContent = 'Ожидание игроков';
-        }
-    }
-    
-    const balanceEl = document.getElementById('crashBalance');
-    if (balanceEl) balanceEl.textContent = gameState.balance.toLocaleString();
-    
-    updateModernBetButton();
-    updateModernCashoutButton();
-    updateBalance();
-}
-
-function updateModernBetButton() {
-    const betBtn = document.getElementById('crashBetBtn');
-    const betAmountInput = document.getElementById('betAmountInput');
-    
-    if (!betBtn || !betAmountInput) return;
-    
-    const amount = parseInt(betAmountInput.value) || 100;
-    const amountSpan = betBtn.querySelector('.btn-amount');
-    if (amountSpan) amountSpan.textContent = `${amount} ⭐`;
-    
-    if (gameState.gamePhase === 'betting' && !gameState.hasBet) {
-        betBtn.disabled = false;
-        betBtn.style.opacity = '1';
-    } else {
-        betBtn.disabled = true;
-        betBtn.style.opacity = '0.5';
-    }
-}
-
-function updateModernCashoutButton() {
-    const cashoutBtn = document.getElementById('crashCashoutBtn');
-    if (!cashoutBtn) return;
-    
-    const amountSpan = cashoutBtn.querySelector('.btn-amount');
-    if (amountSpan && gameState.hasBet) {
-        const winAmount = Math.floor(gameState.currentBet * gameState.multiplier);
-        amountSpan.textContent = `${winAmount} ⭐`;
-    }
-    
-    if (gameState.gamePhase === 'flying' && gameState.hasBet) {
-        cashoutBtn.disabled = false;
-        cashoutBtn.style.opacity = '1';
-    } else {
-        cashoutBtn.disabled = true;
-        cashoutBtn.style.opacity = '0.5';
-    }
-}
-
-function placeCrashBet() {
-    playButtonClick();
-    
-    if (gameState.gamePhase !== 'betting' || gameState.hasBet) return;
-    
-    const betAmountInput = document.getElementById('betAmountInput');
-    if (!betAmountInput) return;
-    
-    const betAmount = parseInt(betAmountInput.value) || 100;
-    
-    if (betAmount < 1) {
-        playErrorSound();
-        return showNotification('⚠️ Минимальная ставка: 1 ⭐');
-    }
-    
-    if (betAmount > gameState.balance) {
-        playErrorSound();
-        return showNotification('⚠️ Недостаточно средств!');
-    }
-    
-    gameState.balance -= betAmount;
-    gameState.currentBet = betAmount;
-    gameState.autoCashout = parseFloat(document.getElementById('autoCashoutInput').value) || 2.00;
-    gameState.hasBet = true;
-    
-    const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
-    if (currentPlayer) {
-        currentPlayer.bet = betAmount;
-        currentPlayer.status = 'betting';
-    }
-    
-    updateModernGameDisplay();
-    updateCrashPlayersDisplay();
-    saveGameStats();
-    
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-    showNotification(`✅ Ставка ${betAmount} ⭐ принята!`);
-}
-
-function crashCashout() {
-    playButtonClick();
-    
-    if (!gameState.hasBet || gameState.gamePhase !== 'flying') return;
-    
-    const winAmount = Math.floor(gameState.currentBet * gameState.multiplier);
-    gameState.balance += winAmount;
-    
-    gameState.stats.gamesPlayed++;
-    gameState.stats.gamesWon++;
-    gameState.stats.totalWinnings += winAmount - gameState.currentBet;
-    gameState.stats.bestMultiplier = Math.max(gameState.stats.bestMultiplier, gameState.multiplier);
-    
-    const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
-    if (currentPlayer) {
-        currentPlayer.status = 'cashed';
-        currentPlayer.cashoutMultiplier = gameState.multiplier.toFixed(2);
-    }
-    
-    gameState.hasBet = false;
-    gameState.currentBet = 0;
-    
-    updateModernGameDisplay();
-    updateCrashPlayersDisplay();
-    saveGameStats();
-    
-    playCashoutSound();
-    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-    showNotification(`🎉 Выигрыш: ${winAmount} ⭐ (${gameState.multiplier.toFixed(2)}x)`);
-}
-
-function adjustBet(amount) {
-    playButtonClick();
-    const input = document.getElementById('betAmountInput');
-    if (!input) return;
-    
-    let currentValue = parseInt(input.value) || 100;
-    let newValue = currentValue + amount;
-    
-    if (newValue < 1) newValue = 1;
-    if (newValue > gameState.balance) newValue = gameState.balance;
-    
-    input.value = newValue;
-    updateModernBetButton();
-}
-
-function adjustCashout(amount) {
-    playButtonClick();
-    const input = document.getElementById('autoCashoutInput');
-    if (!input) return;
-    
-    let currentValue = parseFloat(input.value) || 2.00;
-    let newValue = currentValue + amount;
-    
-    if (newValue < 1.01) newValue = 1.01;
-    if (newValue > 1000) newValue = 1000;
-    
-    input.value = newValue.toFixed(2);
-}
-
-function setQuickBet(amount) {
-    playButtonClick();
-    const input = document.getElementById('betAmountInput');
-    if (input) {
-        input.value = amount;
-        updateModernBetButton();
-    }
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+function handleInputEnd(e) {
+    e.preventDefault();
 }
 
 // Game Logic
-function generateCrashPoint() {
-    const rand = Math.random();
-    if (rand < 0.33) return parseFloat((1.00 + Math.random() * 0.50).toFixed(2));
-    if (rand < 0.60) return parseFloat((1.50 + Math.random() * 1.00).toFixed(2));
-    if (rand < 0.80) return parseFloat((2.50 + Math.random() * 2.50).toFixed(2));
-    if (rand < 0.95) return parseFloat((5.00 + Math.random() * 10.00).toFixed(2));
-    return parseFloat((15.00 + Math.random() * 35.00).toFixed(2));
+function startGame() {
+    if (gameState.isPlaying) return;
+    
+    playButtonClick();
+    initAudioContext();
+    
+    // Reset game state
+    gameState.isPlaying = true;
+    gameState.isPaused = false;
+    gameState.score = 0;
+    gameState.multiplier = 1.0;
+    gameState.gameSpeed = 1;
+    gameState.gameTime = 0;
+    gameState.multipliers = [];
+    gameState.particles = [];
+    
+    // Reset rocket
+    gameState.rocket.x = gameState.canvas.width / 2 - gameState.rocket.width / 2;
+    gameState.rocket.y = gameState.canvas.height - gameState.rocket.height - 20;
+    gameState.rocket.velocityY = 0;
+    
+    // Hide start button
+    document.getElementById('startButton').style.display = 'none';
+    document.getElementById('gameOver').style.display = 'none';
+    
+    // Start game loop
+    gameState.lastTime = performance.now();
+    gameLoop();
+    
+    // Generate multipliers
+    generateMultipliers();
+    
+    updateDisplay();
+    
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
 }
 
-function startNewRound() {
-    gameState.gamePhase = 'betting';
-    gameState.multiplier = 1.00;
-    gameState.curve = [];
-    gameState.crashPoint = generateCrashPoint();
-    gameState.hasBet = false;
+function gameLoop(currentTime) {
+    if (!gameState.isPlaying) return;
     
-    gameState.realPlayers.forEach(player => {
-        player.status = 'waiting';
-        player.bet = 0;
-        player.cashoutMultiplier = null;
-    });
-    updateCrashPlayersDisplay();
+    const deltaTime = (currentTime - gameState.lastTime) / 16.67; // Normalize to 60fps
+    gameState.lastTime = currentTime;
+    gameState.gameTime += deltaTime;
     
-    // Правильная инициализация ракеты
-    const rocket = document.getElementById('rocketPlane');
-    if (rocket) {
-        // Убираем все классы анимации
-        rocket.classList.remove('flying', 'crashed');
-        
-        // Сбрасываем позицию в начальную точку
-        rocket.style.left = '40px';
-        rocket.style.bottom = '40px';
-        rocket.style.transform = 'rotate(0deg)';
-        rocket.style.filter = 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 107, 53, 0.6))';
+    // Increase game speed over time
+    gameState.gameSpeed = 1 + (gameState.gameTime * 0.001);
+    
+    // Update rocket physics
+    updateRocket(deltaTime);
+    
+    // Update multipliers
+    updateMultipliers(deltaTime);
+    
+    // Update particles
+    updateParticles(deltaTime);
+    
+    // Check collisions
+    checkCollisions();
+    
+    // Check game over conditions
+    if (gameState.rocket.y > gameState.canvas.height) {
+        gameOver();
+        return;
     }
     
-    updateModernGameDisplay();
-    let countdown = 5;
-    const timerEl = document.getElementById('crashTimer');
-    if (timerEl) timerEl.textContent = countdown;
+    // Update score
+    gameState.score += Math.floor(gameState.gameSpeed * gameState.multiplier);
     
-    const interval = setInterval(() => {
-        countdown--;
-        if (timerEl) timerEl.textContent = countdown;
-        if (countdown <= 0) {
-            clearInterval(interval);
-            startFlying();
-        }
-    }, 1000);
+    // Draw everything
+    drawGame();
+    updateDisplay();
+    
+    gameState.animationId = requestAnimationFrame(gameLoop);
 }
 
-function startFlying() {
-    gameState.gamePhase = 'flying';
-    gameState.multiplier = 1.00;
-    gameState.gameStartTime = Date.now();
+function updateRocket(deltaTime) {
+    // Apply gravity
+    gameState.rocket.velocityY += gameState.rocket.gravity * deltaTime;
     
-    const timerEl = document.getElementById('crashTimer');
-    if (timerEl) timerEl.textContent = '🚀';
-    
-    const betBtn = document.getElementById('crashBetBtn');
-    if (betBtn) betBtn.disabled = true;
-    
-    if (gameState.hasBet) {
-        const cashoutBtn = document.getElementById('crashCashoutBtn');
-        if (cashoutBtn) cashoutBtn.disabled = false;
+    // Limit velocity
+    if (gameState.rocket.velocityY > gameState.rocket.maxVelocity) {
+        gameState.rocket.velocityY = gameState.rocket.maxVelocity;
+    }
+    if (gameState.rocket.velocityY < -gameState.rocket.maxVelocity) {
+        gameState.rocket.velocityY = -gameState.rocket.maxVelocity;
     }
     
-    // Запускаем анимацию полета ракеты
-    const rocket = document.getElementById('rocketPlane');
-    if (rocket) {
-        rocket.classList.add('flying');
-    }
+    // Update position
+    gameState.rocket.y += gameState.rocket.velocityY * deltaTime;
     
-    gameState.gameInterval = setInterval(() => {
-        updateMultiplier();
-        updateRocketPosition();
-        drawChart();
-        updateModernGameDisplay();
-        updateRealPlayersStatus();
-        
-        if (gameState.multiplier >= gameState.crashPoint) crashGame();
-        if (gameState.hasBet && gameState.autoCashout > 0 && gameState.multiplier >= gameState.autoCashout) crashCashout();
-    }, 100);
-}
-
-function updateMultiplier() {
-    const timeElapsed = (Date.now() - gameState.gameStartTime) / 1000;
-    
-    let baseSpeed = 0.008;
-    
-    if (timeElapsed < 2) {
-        baseSpeed *= (0.5 + timeElapsed * 0.25);
-    } else if (timeElapsed < 5) {
-        baseSpeed *= (1 + (timeElapsed - 2) * 0.3);
-    } else if (timeElapsed < 10) {
-        baseSpeed *= (1.9 + (timeElapsed - 5) * 0.4);
-    } else {
-        baseSpeed *= (4.9 + (timeElapsed - 10) * 0.2);
-    }
-    
-    const randomFactor = 0.8 + Math.random() * 0.4;
-    const increment = baseSpeed * randomFactor;
-    
-    gameState.multiplier += increment;
-    gameState.multiplier = Math.min(gameState.multiplier, gameState.crashPoint);
-    
-    const jumpChance = gameState.multiplier > 5 ? 0.05 : 0.02;
-    if (Math.random() < jumpChance) {
-        const jumpSize = gameState.multiplier > 10 ? 0.05 + Math.random() * 0.1 : 0.01 + Math.random() * 0.03;
-        gameState.multiplier += jumpSize;
-        gameState.multiplier = Math.min(gameState.multiplier, gameState.crashPoint);
+    // Keep rocket in bounds horizontally
+    if (gameState.rocket.x < 0) gameState.rocket.x = 0;
+    if (gameState.rocket.x > gameState.canvas.width - gameState.rocket.width) {
+        gameState.rocket.x = gameState.canvas.width - gameState.rocket.width;
     }
 }
 
-function updateRocketPosition() {
-    const rocket = document.getElementById('rocketPlane');
-    if (!rocket) return;
+function generateMultipliers() {
+    if (!gameState.isPlaying) return;
     
-    const gameArea = document.querySelector('.crash-game-area');
-    if (!gameArea) return;
+    // Generate new multiplier
+    const multiplier = {
+        x: Math.random() * (gameState.canvas.width - 30),
+        y: -30,
+        width: 30,
+        height: 30,
+        value: 1.1 + Math.random() * 0.4, // 1.1x to 1.5x
+        collected: false,
+        speed: 2 + Math.random() * 2
+    };
     
-    // Получаем размеры контейнера
-    const containerWidth = gameArea.offsetWidth;
-    const containerHeight = gameArea.offsetHeight;
+    gameState.multipliers.push(multiplier);
     
-    // Простое плавное движение
-    const progress = Math.min((gameState.multiplier - 1) / (Math.max(gameState.crashPoint, 5) - 1), 1);
-    
-    // Горизонтальное движение
-    const startX = 40;
-    const endX = containerWidth - 60;
-    const x = startX + (endX - startX) * progress;
-    
-    // Вертикальное движение
-    const startY = containerHeight - 60;
-    const endY = 60;
-    const y = startY - (startY - endY) * progress;
-    
-    // Простой поворот
-    const rotation = Math.min(progress * 15, 15);
-    
-    // Применяем позицию
-    rocket.style.left = `${x}px`;
-    rocket.style.bottom = `${containerHeight - y}px`;
-    rocket.style.transform = `rotate(${rotation}deg)`;
-    
-    // Эффекты для высоких множителей
-    if (gameState.multiplier > 3) {
-        rocket.style.filter = 'brightness(1.5) drop-shadow(0 0 12px rgba(255, 107, 53, 0.8))';
-    } else {
-        rocket.style.filter = 'brightness(1.2) drop-shadow(0 0 8px rgba(255, 107, 53, 0.6))';
-    }
+    // Schedule next multiplier
+    const delay = Math.max(1000, 3000 - (gameState.gameTime * 2));
+    setTimeout(generateMultipliers, delay);
 }
 
-function crashGame() {
-    clearInterval(gameState.gameInterval);
-    gameState.gamePhase = 'crashed';
-    
-    const timerEl = document.getElementById('crashTimer');
-    if (timerEl) timerEl.textContent = '💥';
-    
-    // Простая анимация краша ракеты
-    const rocket = document.getElementById('rocketPlane');
-    if (rocket) {
-        rocket.classList.remove('flying');
-        rocket.classList.add('crashed');
-    }
-    
-    if (gameState.hasBet) {
-        gameState.stats.gamesPlayed++;
+function updateMultipliers(deltaTime) {
+    gameState.multipliers.forEach((mult, index) => {
+        if (mult.collected) return;
         
-        const currentPlayer = gameState.realPlayers.find(p => p.isCurrentUser);
-        if (currentPlayer) {
-            currentPlayer.status = 'crashed';
-        }
+        mult.y += mult.speed * gameState.gameSpeed * deltaTime;
         
-        gameState.hasBet = false;
-        gameState.currentBet = 0;
-        
-        playCrashSound();
-        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-        showNotification(`💥 Краш на ${gameState.crashPoint.toFixed(2)}x! Ставка проиграна.`);
-    } else {
-        playCrashSound();
-    }
-    
-    gameState.realPlayers.forEach(player => {
-        if (player.status === 'betting') {
-            player.status = 'crashed';
+        // Remove if off screen
+        if (mult.y > gameState.canvas.height + 50) {
+            gameState.multipliers.splice(index, 1);
         }
     });
-    
-    gameState.gameHistory.unshift(gameState.crashPoint);
-    if (gameState.gameHistory.length > 10) gameState.gameHistory.pop();
-    updateCrashHistory();
-    
-    updateModernGameDisplay();
-    updateCrashPlayersDisplay();
-    saveGameStats();
-    
-    setTimeout(() => {
-        startNewRound();
-    }, 3000);
 }
 
-function updateCrashHistory() {
-    const historyEl = document.getElementById('crashHistory');
-    if (!historyEl) return;
-    
-    historyEl.innerHTML = '';
-    gameState.gameHistory.forEach(multiplier => {
-        const item = document.createElement('span');
-        item.className = 'history-item';
-        item.textContent = `${multiplier.toFixed(2)}x`;
+function checkCollisions() {
+    gameState.multipliers.forEach((mult, index) => {
+        if (mult.collected) return;
         
-        if (multiplier < 2) {
-            item.classList.add('low');
-        } else if (multiplier < 5) {
-            item.classList.add('medium');
-        } else {
-            item.classList.add('high');
+        // Check collision with rocket
+        if (gameState.rocket.x < mult.x + mult.width &&
+            gameState.rocket.x + gameState.rocket.width > mult.x &&
+            gameState.rocket.y < mult.y + mult.height &&
+            gameState.rocket.y + gameState.rocket.height > mult.y) {
+            
+            // Collect multiplier
+            mult.collected = true;
+            gameState.multiplier += (mult.value - 1);
+            
+            // Create particles
+            createParticles(mult.x + mult.width/2, mult.y + mult.height/2);
+            
+            playCollectSound();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            
+            // Remove multiplier
+            gameState.multipliers.splice(index, 1);
         }
-        
-        historyEl.appendChild(item);
     });
 }
 
-function initializeCanvas() {
-    gameState.canvas = document.getElementById('gameCanvas');
-    if (!gameState.canvas) return;
-    
-    gameState.ctx = gameState.canvas.getContext('2d');
-    const container = gameState.canvas.parentElement;
-    const rect = container.getBoundingClientRect();
-    
-    gameState.canvas.width = rect.width * window.devicePixelRatio;
-    gameState.canvas.height = 200 * window.devicePixelRatio;
-    gameState.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    
-    gameState.canvas.style.width = rect.width + 'px';
-    gameState.canvas.style.height = '200px';
-    drawChart();
+function createParticles(x, y) {
+    for (let i = 0; i < 8; i++) {
+        gameState.particles.push({
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            life: 1.0,
+            decay: 0.02 + Math.random() * 0.02
+        });
+    }
 }
 
-function drawChart() {
-    if (!gameState.ctx || !gameState.canvas) return;
-    
+function updateParticles(deltaTime) {
+    gameState.particles.forEach((particle, index) => {
+        particle.x += particle.vx * deltaTime;
+        particle.y += particle.vy * deltaTime;
+        particle.life -= particle.decay * deltaTime;
+        
+        if (particle.life <= 0) {
+            gameState.particles.splice(index, 1);
+        }
+    });
+}
+
+function drawGame() {
     const ctx = gameState.ctx;
-    const width = gameState.canvas.style.width ? parseInt(gameState.canvas.style.width) : gameState.canvas.width;
-    const height = gameState.canvas.style.height ? parseInt(gameState.canvas.style.height) : gameState.canvas.height;
+    const canvas = gameState.canvas;
     
-    ctx.clearRect(0, 0, width, height);
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    const bgGradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, Math.max(width, height));
-    bgGradient.addColorStop(0, 'rgba(10, 10, 10, 0.3)');
-    bgGradient.addColorStop(0.5, 'rgba(26, 26, 46, 0.5)');
-    bgGradient.addColorStop(1, 'rgba(22, 33, 62, 0.7)');
-    ctx.fillStyle = bgGradient;
-    ctx.fillRect(0, 0, width, height);
+    // Draw background gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#0a0a1a');
+    gradient.addColorStop(0.5, '#1a1a3a');
+    gradient.addColorStop(1, '#2a2a4a');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    if (gameState.gamePhase === 'flying' && gameState.curve.length > 1) {
-        const gradient = ctx.createLinearGradient(0, height, 0, 0);
-        gradient.addColorStop(0, 'rgba(255, 107, 53, 0.1)');
-        gradient.addColorStop(0.3, 'rgba(255, 107, 53, 0.3)');
-        gradient.addColorStop(0.7, 'rgba(255, 107, 53, 0.5)');
-        gradient.addColorStop(1, 'rgba(255, 107, 53, 0.8)');
-        
-        ctx.beginPath();
-        ctx.moveTo(0, height);
-        
-        gameState.curve.forEach((point, index) => {
-            const x = (index / (gameState.curve.length - 1)) * width;
-            const normalizedMultiplier = Math.log(point) / Math.log(Math.max(gameState.crashPoint, 10));
-            const y = height - (normalizedMultiplier * height * 0.8);
-            
-            if (index === 0) {
-                ctx.moveTo(x, Math.min(height, Math.max(0, y)));
-            } else {
-                ctx.lineTo(x, Math.min(height, Math.max(0, y)));
-            }
-        });
-        
-        ctx.lineTo(width, height);
-        ctx.closePath();
-        ctx.fillStyle = gradient;
-        ctx.fill();
-        
-        ctx.beginPath();
-        gameState.curve.forEach((point, index) => {
-            const x = (index / (gameState.curve.length - 1)) * width;
-            const normalizedMultiplier = Math.log(point) / Math.log(Math.max(gameState.crashPoint, 10));
-            const y = height - (normalizedMultiplier * height * 0.8);
-            
-            if (index === 0) {
-                ctx.moveTo(x, Math.min(height, Math.max(0, y)));
-            } else {
-                ctx.lineTo(x, Math.min(height, Math.max(0, y)));
-            }
-        });
-        
-        const lineGradient = ctx.createLinearGradient(0, 0, width, 0);
-        lineGradient.addColorStop(0, '#ff6b35');
-        lineGradient.addColorStop(0.5, '#ff4757');
-        lineGradient.addColorStop(1, '#ff3742');
-        
-        ctx.strokeStyle = lineGradient;
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.shadowColor = '#ff6b35';
-        ctx.shadowBlur = 10;
-        ctx.stroke();
-        
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-    }
+    // Draw stars
+    drawStars(ctx, canvas);
     
-    if (gameState.gamePhase === 'flying') {
-        gameState.curve.push(gameState.multiplier);
-        if (gameState.curve.length > 150) {
-            gameState.curve.shift();
+    // Draw multipliers
+    gameState.multipliers.forEach(mult => {
+        if (!mult.collected) {
+            drawMultiplier(ctx, mult);
         }
+    });
+    
+    // Draw particles
+    gameState.particles.forEach(particle => {
+        drawParticle(ctx, particle);
+    });
+    
+    // Draw rocket
+    drawRocket(ctx);
+}
+
+function drawStars(ctx, canvas) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    for (let i = 0; i < 50; i++) {
+        const x = (i * 37) % canvas.width;
+        const y = ((i * 23) + gameState.gameTime * 0.5) % canvas.height;
+        const size = 1 + (i % 3);
+        ctx.fillRect(x, y, size, size);
     }
 }
 
-// Top Up Functions
+function drawRocket(ctx) {
+    const rocket = gameState.rocket;
+    
+    // Draw rocket body
+    ctx.fillStyle = '#ff6b35';
+    ctx.fillRect(rocket.x + 10, rocket.y + 5, 20, 30);
+    
+    // Draw rocket nose
+    ctx.fillStyle = '#ff4757';
+    ctx.beginPath();
+    ctx.moveTo(rocket.x + 20, rocket.y);
+    ctx.lineTo(rocket.x + 10, rocket.y + 10);
+    ctx.lineTo(rocket.x + 30, rocket.y + 10);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Draw rocket fins
+    ctx.fillStyle = '#ff3742';
+    ctx.fillRect(rocket.x + 5, rocket.y + 25, 10, 15);
+    ctx.fillRect(rocket.x + 25, rocket.y + 25, 10, 15);
+    
+    // Draw thrust effect if moving up
+    if (rocket.velocityY < 0) {
+        ctx.fillStyle = '#ffaa00';
+        ctx.beginPath();
+        ctx.moveTo(rocket.x + 15, rocket.y + 40);
+        ctx.lineTo(rocket.x + 20, rocket.y + 50 + Math.random() * 10);
+        ctx.lineTo(rocket.x + 25, rocket.y + 40);
+        ctx.closePath();
+        ctx.fill();
+    }
+}
+
+function drawMultiplier(ctx, mult) {
+    // Draw multiplier background
+    ctx.fillStyle = '#4caf50';
+    ctx.fillRect(mult.x, mult.y, mult.width, mult.height);
+    
+    // Draw multiplier border
+    ctx.strokeStyle = '#66bb6a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(mult.x, mult.y, mult.width, mult.height);
+    
+    // Draw multiplier text
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`x${mult.value.toFixed(1)}`, mult.x + mult.width/2, mult.y + mult.height/2 + 4);
+}
+
+function drawParticle(ctx, particle) {
+    ctx.fillStyle = `rgba(76, 175, 80, ${particle.life})`;
+    ctx.fillRect(particle.x - 2, particle.y - 2, 4, 4);
+}
+
+function gameOver() {
+    gameState.isPlaying = false;
+    
+    if (gameState.animationId) {
+        cancelAnimationFrame(gameState.animationId);
+    }
+    
+    playGameOverSound();
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+    
+    // Update balance
+    const earnedStars = Math.floor(gameState.score / 100);
+    gameState.balance += earnedStars;
+    
+    // Show game over screen
+    document.getElementById('finalScore').textContent = gameState.score;
+    document.getElementById('finalMultiplier').textContent = `x${gameState.multiplier.toFixed(1)}`;
+    document.getElementById('gameOver').style.display = 'block';
+    
+    updateBalance();
+    saveGameData();
+}
+
+function restartGame() {
+    document.getElementById('startButton').style.display = 'block';
+    document.getElementById('gameOver').style.display = 'none';
+    
+    // Reset display
+    gameState.score = 0;
+    gameState.multiplier = 1.0;
+    updateDisplay();
+    
+    // Clear canvas
+    if (gameState.ctx) {
+        gameState.ctx.clearRect(0, 0, gameState.canvas.width, gameState.canvas.height);
+    }
+}
+
+function updateDisplay() {
+    document.getElementById('score').textContent = gameState.score;
+    document.getElementById('multiplier').textContent = `x${gameState.multiplier.toFixed(1)}`;
+    
+    if (gameState.isPlaying) {
+        document.getElementById('gameStatus').textContent = `Скорость: ${gameState.gameSpeed.toFixed(1)}x`;
+    } else {
+        document.getElementById('gameStatus').textContent = 'Нажми для старта';
+    }
+}
+
+function updateBalance() {
+    const balanceElements = ['headerBalance', 'gameBalance'];
+    balanceElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = gameState.balance.toLocaleString();
+    });
+}
+
+function saveGameData() {
+    try {
+        localStorage.setItem('rocket_balance', gameState.balance.toString());
+    } catch (e) {
+        console.log('Save error:', e);
+    }
+}
+
+function loadGameData() {
+    try {
+        const saved = localStorage.getItem('rocket_balance');
+        if (saved) gameState.balance = Math.max(1, parseInt(saved));
+        
+        const soundSaved = localStorage.getItem('rocket_sound');
+        if (soundSaved !== null) {
+            soundEnabled = soundSaved === 'true';
+            toggleSound();
+            toggleSound(); // Call twice to set correct state
+        }
+    } catch (e) {
+        console.log('Load error:', e);
+    }
+}
+
+// Modal functions (simplified)
 function openTopUpModal() {
     playButtonClick();
-    document.getElementById('topUpModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
-    const el = document.getElementById('currentBalance');
-    if (el) el.textContent = `${gameState.balance.toLocaleString()} ⭐`;
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    showNotification('💰 Пополнение баланса недоступно в демо версии');
 }
 
-function closeTopUpModal() {
-    playButtonClick();
-    document.getElementById('topUpModal').classList.remove('active');
-    document.body.style.overflow = 'auto';
-}
-
-function setQuickAmount(amount) {
-    playButtonClick();
-    const input = document.getElementById('topUpAmount');
-    if (input) {
-        input.value = amount;
-        input.style.transform = 'scale(1.05)';
-        setTimeout(() => input.style.transform = 'scale(1)', 200);
-    }
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-}
-
-function purchaseFromInput() {
-    playButtonClick();
-    const input = document.getElementById('topUpAmount');
-    if (!input) return;
-    const amount = parseInt(input.value);
-    if (!amount || amount < 1) {
-        playErrorSound();
-        return showNotification('⚠️ Введите корректную сумму!');
-    }
-    if (amount > 10000) {
-        playErrorSound();
-        return showNotification('⚠️ Максимальная сумма: 10,000 звезд');
-    }
-    purchaseStars(amount);
-}
-
-function purchaseStars(amount) {
-    showNotification('🔄 Обработка платежа...');
-    
-    if (tg.openInvoice) {
-        const invoiceUrl = `https://t.me/$invoice?start=XTR_${amount}_${Date.now()}`;
-        tg.openInvoice(invoiceUrl, (result) => {
-            if (result.status === 'paid') {
-                gameState.balance += amount;
-                updateBalance();
-                const el = document.getElementById('currentBalance');
-                if (el) el.textContent = `${gameState.balance.toLocaleString()} ⭐`;
-                const input = document.getElementById('topUpAmount');
-                if (input) input.value = '';
-                closeTopUpModal();
-                playSuccessSound();
-                showNotification(`✅ Пополнение успешно! Получено ${amount} ⭐`);
-                saveGameStats();
-            } else {
-                playErrorSound();
-                showNotification('❌ Платеж отменен');
-            }
-        });
-    } else {
-        setTimeout(() => {
-            gameState.balance += amount;
-            updateBalance();
-            const el = document.getElementById('currentBalance');
-            if (el) el.textContent = `${gameState.balance.toLocaleString()} ⭐`;
-            const input = document.getElementById('topUpAmount');
-            if (input) input.value = '';
-            closeTopUpModal();
-            playSuccessSound();
-            showNotification(`✅ Пополнение успешно! Получено ${amount} ⭐`);
-            saveGameStats();
-        }, 2000);
-    }
-}
-
-// Promo Code Functions
-function openPromoModal() {
-    playButtonClick();
-    document.getElementById('promoModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-}
-
-function closePromoModal() {
-    playButtonClick();
-    document.getElementById('promoModal').classList.remove('active');
-    document.body.style.overflow = 'auto';
-}
-
-function activatePromoCode() {
-    playButtonClick();
-    
-    const input = document.getElementById('promoCodeInput');
-    if (!input) return;
-    
-    const code = input.value.trim().toUpperCase();
-    if (!code) {
-        playErrorSound();
-        return showNotification('⚠️ Введите промокод!');
-    }
-    
-    const usedPromos = JSON.parse(localStorage.getItem('xudobudo_promos') || '[]');
-    if (usedPromos.includes(code)) {
-        playErrorSound();
-        return showNotification('⚠️ Промокод уже использован!');
-    }
-    
-    const validPromos = {
-        'WELCOME': 100, 'START': 50, 'BONUS': 200, 'LUCKY': 150,
-        'WIN': 75, 'GAME': 125, 'STAR': 300, 'ROCKET': 250
-    };
-    
-    if (validPromos[code]) {
-        const reward = validPromos[code];
-        gameState.balance += reward;
-        
-        usedPromos.push(code);
-        localStorage.setItem('xudobudo_promos', JSON.stringify(usedPromos));
-        
-        addActivatedPromo(code, reward);
-        
-        input.value = '';
-        updateBalance();
-        saveGameStats();
-        
-        playSuccessSound();
-        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-        showNotification(`🎉 Промокод активирован! Получено ${reward} ⭐`);
-    } else {
-        playErrorSound();
-        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-        showNotification('❌ Неверный промокод!');
-    }
-}
-
-function addActivatedPromo(code, reward) {
-    const container = document.getElementById('activatedPromos');
-    if (!container) return;
-    
-    const noPromos = container.querySelector('.no-promos');
-    if (noPromos) noPromos.remove();
-    
-    const item = document.createElement('div');
-    item.className = 'promo-item';
-    item.innerHTML = `
-        <span class="promo-code">${code}</span>
-        <span class="promo-reward">+${reward} ⭐</span>
-    `;
-    
-    container.insertBefore(item, container.firstChild);
-}
-
-function loadActivatedPromos() {
-    const usedPromos = JSON.parse(localStorage.getItem('xudobudo_promos') || '[]');
-    const validPromos = {
-        'WELCOME': 100, 'START': 50, 'BONUS': 200, 'LUCKY': 150,
-        'WIN': 75, 'GAME': 125, 'STAR': 300, 'ROCKET': 250
-    };
-    
-    usedPromos.forEach(code => {
-        if (validPromos[code]) {
-            addActivatedPromo(code, validPromos[code]);
-        }
-    });
-}
-
-// Notification System
 function showNotification(message) {
-    const existing = document.querySelectorAll('.notification');
-    existing.forEach(n => n.remove());
-    
     const notification = document.createElement('div');
     notification.className = 'notification';
     notification.textContent = message;
-    
     document.body.appendChild(notification);
     
     setTimeout(() => {
@@ -1057,103 +562,25 @@ function showNotification(message) {
     }, 3000);
 }
 
-function updateBalance() {
-    const balanceEl = document.querySelector('.balance-amount');
-    if (balanceEl) balanceEl.textContent = gameState.balance.toLocaleString();
-    
-    const crashBalanceEl = document.getElementById('crashBalance');
-    if (crashBalanceEl) crashBalanceEl.textContent = gameState.balance.toLocaleString();
-    
-    const profileBalanceEl = document.getElementById('profileBalance');
-    if (profileBalanceEl) profileBalanceEl.textContent = gameState.balance.toLocaleString();
-}
-
-function updateProfileStats() {
-    const gamesEl = document.getElementById('profileGames');
-    const winsEl = document.getElementById('profileWins');
-    
-    if (gamesEl) gamesEl.textContent = gameState.stats.gamesPlayed;
-    if (winsEl) winsEl.textContent = gameState.stats.gamesWon;
-}
-
-function setupInputHandlers() {
-    const betAmountInput = document.getElementById('betAmountInput');
-    const autoCashoutInput = document.getElementById('autoCashoutInput');
-    
-    if (betAmountInput) {
-        betAmountInput.addEventListener('input', () => {
-            let value = parseInt(betAmountInput.value) || 0;
-            if (value < 1) value = 1;
-            if (value > gameState.balance) value = gameState.balance;
-            betAmountInput.value = value;
-            updateModernBetButton();
-        });
-    }
-    
-    if (autoCashoutInput) {
-        autoCashoutInput.addEventListener('input', () => {
-            let value = parseFloat(autoCashoutInput.value) || 1.01;
-            if (value < 1.01) value = 1.01;
-            if (value > 1000) value = 1000;
-            autoCashoutInput.value = value.toFixed(2);
-        });
-    }
-}
-
-// Initialization
-function initializeApp() {
-    tg.expand();
-    tg.ready();
-    applyTelegramTheme();
-    
-    document.addEventListener('click', initAudioContext, { once: true });
-    document.addEventListener('touchstart', initAudioContext, { once: true });
-    
-    loadSavedBalance();
-    loadSoundSettings();
-    loadActivatedPromos();
-    setupInputHandlers();
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+    loadGameData();
     updateBalance();
-    updateProfileStats();
-    updateCrashHistory();
     
-    showSection('games');
-    
-    console.log('XudoBudoGame initialized successfully!');
-}
-
-// Запускаем приложение когда DOM готов
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-    initializeApp();
-}
-
-// Обработка изменения размера окна
-window.addEventListener('resize', () => {
-    if (gameState.canvas) {
-        setTimeout(initializeCanvas, 100);
-    }
+    // Initialize Telegram WebApp
+    if (tg.ready) tg.ready();
+    if (tg.expand) tg.expand();
 });
 
-// Предотвращение случайного закрытия
-window.addEventListener('beforeunload', (e) => {
-    if (gameState.hasBet && gameState.gamePhase === 'flying') {
-        e.preventDefault();
-        e.returnValue = 'У вас есть активная ставка! Вы уверены, что хотите покинуть игру?';
-    }
-});
-
-// Обработка видимости страницы
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        console.log('App hidden');
-    } else {
-        console.log('App visible');
-        if (gameState.canvas) {
-            initializeCanvas();
+// Handle page visibility
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden && gameState.isPlaying) {
+        gameState.isPaused = true;
+    } else if (!document.hidden && gameState.isPaused) {
+        gameState.isPaused = false;
+        gameState.lastTime = performance.now();
+        if (gameState.isPlaying) {
+            gameLoop();
         }
     }
 });
-
-console.log('XudoBudoGame script loaded successfully!');
