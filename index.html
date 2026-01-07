@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rocket Flight Game</title>
+    <title>XudoBudo Crash Game</title>
     <link rel="stylesheet" href="styles.css">
     <script>
         window.addEventListener('DOMContentLoaded', function() {
@@ -31,7 +31,7 @@
     <div class="app">
         <!-- Header -->
         <header class="header">
-            <h1 class="logo">Rocket Flight</h1>
+            <h1 class="logo">XudoBudo Crash</h1>
             <div class="header-actions">
                 <button class="sound-btn" onclick="toggleSound()" id="soundToggle">🔊</button>
                 <button class="balance-btn" onclick="openTopUpModal()">
@@ -46,22 +46,22 @@
             <section id="games" class="section active">
                 <div class="games-container">
                     <h2>Игры</h2>
-                    <div class="game-card" onclick="showSection('rocket')">
+                    <div class="game-card" onclick="showSection('crash')">
                         <div class="game-icon">🚀</div>
                         <div class="game-info">
-                            <h3>Rocket Flight</h3>
-                            <p>Лети вверх и собирай множители!</p>
+                            <h3>Crash Game</h3>
+                            <p>Делай ставки и забирай до краша!</p>
                         </div>
                         <div class="game-status">Online</div>
                     </div>
                 </div>
             </section>
 
-            <!-- Rocket Flight Game Section -->
-            <section id="rocket" class="section">
-                <div class="rocket-game">
+            <!-- Crash Game Section -->
+            <section id="crash" class="section">
+                <div class="crash-game">
                     <!-- Header -->
-                    <div class="game-header">
+                    <div class="crash-header">
                         <button class="back-button" onclick="showSection('games')">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
@@ -70,9 +70,9 @@
                         </button>
                         <div class="balance-display">
                             <span class="balance-icon">⭐</span>
-                            <span class="balance-value" id="gameBalance">1,000</span>
+                            <span class="balance-value" id="crashBalance">1,000</span>
                         </div>
-                        <button class="sound-toggle" onclick="toggleSound()" id="gameSoundBtn">
+                        <button class="sound-toggle" onclick="toggleSound()" id="crashSoundBtn">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                             </svg>
@@ -80,38 +80,92 @@
                     </div>
 
                     <!-- Game Area -->
-                    <div class="game-area" id="gameArea">
-                        <div class="game-status" id="gameStatus">Нажми для старта</div>
-                        <div class="score-display">
-                            <div class="score" id="score">0</div>
-                            <div class="multiplier" id="multiplier">x1.0</div>
-                        </div>
+                    <div class="game-area" id="crashGameArea">
+                        <div class="game-status" id="crashStatus">Ожидание раунда...</div>
+                        <div class="multiplier-display" id="crashMultiplier">1.00x</div>
                         
                         <!-- Game Canvas -->
-                        <canvas id="gameCanvas" class="game-canvas"></canvas>
+                        <canvas id="crashCanvas" class="game-canvas"></canvas>
                         
-                        <!-- Start Button -->
-                        <button class="start-button" id="startButton" onclick="startGame()">
-                            🚀 СТАРТ
-                        </button>
-                        
-                        <!-- Game Over Screen -->
-                        <div class="game-over" id="gameOver" style="display: none;">
-                            <h3>Игра окончена!</h3>
-                            <div class="final-score">
-                                <div>Очки: <span id="finalScore">0</span></div>
-                                <div>Множитель: <span id="finalMultiplier">x1.0</span></div>
-                            </div>
-                            <button onclick="restartGame()">Играть снова</button>
+                        <!-- Rocket -->
+                        <div class="rocket-container" id="crashRocket">
+                            <img src="raketa.png" alt="Rocket" class="rocket-sprite">
+                            <div class="rocket-trail"></div>
+                            <div class="rocket-glow"></div>
                         </div>
                     </div>
 
-                    <!-- Controls -->
-                    <div class="controls">
-                        <div class="control-info">
-                            <p>🎮 Управление: Нажимай на экран чтобы лететь вверх</p>
-                            <p>⭐ Собирай множители для увеличения очков</p>
-                            <p>⚡ Ракета ускоряется со временем</p>
+                    <!-- Game History -->
+                    <div class="game-history">
+                        <div class="history-label">История</div>
+                        <div class="history-items" id="crashHistory">
+                            <div class="history-item medium">2.45x</div>
+                            <div class="history-item low">1.23x</div>
+                            <div class="history-item high">5.67x</div>
+                            <div class="history-item medium">3.21x</div>
+                            <div class="history-item low">1.89x</div>
+                        </div>
+                    </div>
+
+                    <!-- Betting Panel -->
+                    <div class="betting-panel">
+                        <div class="bet-controls">
+                            <div class="bet-input-group">
+                                <div class="input-label">Ставка</div>
+                                <div class="amount-input">
+                                    <button class="amount-btn" onclick="adjustBet(-10)">-</button>
+                                    <input type="number" id="betAmount" value="100" min="10" max="10000">
+                                    <button class="amount-btn" onclick="adjustBet(10)">+</button>
+                                </div>
+                            </div>
+                            <div class="bet-input-group">
+                                <div class="input-label">Авто-вывод</div>
+                                <div class="amount-input">
+                                    <button class="amount-btn" onclick="adjustAutoCashout(-0.1)">-</button>
+                                    <input type="number" id="autoCashout" value="2.00" min="1.01" max="100" step="0.01">
+                                    <button class="amount-btn" onclick="adjustAutoCashout(0.1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-bets">
+                            <button class="quick-bet" onclick="setBetAmount(50)">50 ⭐</button>
+                            <button class="quick-bet" onclick="setBetAmount(100)">100 ⭐</button>
+                            <button class="quick-bet" onclick="setBetAmount(250)">250 ⭐</button>
+                            <button class="quick-bet" onclick="setBetAmount(500)">500 ⭐</button>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="bet-button" id="betBtn" onclick="placeBet()">
+                                <div class="button-content">
+                                    <div class="button-text">Поставить</div>
+                                    <div class="button-amount" id="betBtnAmount">100 ⭐</div>
+                                </div>
+                            </button>
+                            <button class="cashout-button" id="cashoutBtn" onclick="cashOut()" disabled>
+                                <div class="button-content">
+                                    <div class="button-text">Забрать</div>
+                                    <div class="button-amount" id="cashoutBtnAmount">0 ⭐</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Players Section -->
+                    <div class="players-section">
+                        <div class="players-header">
+                            <div class="players-title">
+                                <span class="players-icon">👥</span>
+                                <span class="title-text">Игроки</span>
+                                <span class="players-count" id="playersCount">12</span>
+                            </div>
+                            <div class="online-indicator">
+                                <div class="online-dot"></div>
+                                <span class="online-text">Online</span>
+                            </div>
+                        </div>
+                        <div class="players-list" id="playersList">
+                            <!-- Players will be added dynamically -->
                         </div>
                     </div>
                 </div>
