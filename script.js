@@ -49,7 +49,11 @@ function playSound(frequency, duration, type = 'sine', volume = 0.1) {
     }
 }
 
-function playButtonClick() { playSound(800, 0.1, 'square', 0.05); }
+function playButtonClick() { 
+    playSound(800, 0.1, 'square', 0.05);
+    // Enhanced haptic feedback
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+}
 function playBetSound() { playSound(600, 0.2, 'sine', 0.08); }
 function playCashoutSound() { playSound(800, 0.3, 'triangle', 0.1); }
 function playCrashSound() { playSound(200, 0.5, 'sawtooth', 0.15); }
@@ -117,27 +121,52 @@ function startNewRound() {
     crashGame.crashPoint = generateCrashPoint();
     crashGame.rocketPosition = { x: 50, y: 80 };
     
-    // Reset UI
-    document.getElementById('crashStatus').textContent = 'Делайте ставки!';
+    // Reset UI - обновлено для новых элементов
+    const statusEl = document.getElementById('crashStatus');
+    if (statusEl) {
+        statusEl.innerHTML = '<span class="status-text">Делайте ставки!</span><div class="countdown-timer" id="countdownTimer">5</div>';
+    }
+    
     document.getElementById('crashMultiplier').textContent = '1.00x';
     document.getElementById('betBtn').disabled = false;
     document.getElementById('cashoutBtn').disabled = true;
     
     const rocket = document.getElementById('crashRocket');
     if (rocket) {
-        rocket.className = 'rocket-container';
+        rocket.className = 'rocket-container-enhanced';
         rocket.style.left = '50px';
         rocket.style.bottom = '20%';
     }
     
-    // Betting phase timer (5 seconds)
-    setTimeout(() => {
-        if (crashGame.gamePhase === 'betting') {
-            startFlying();
-        }
-    }, 5000);
+    // Countdown timer with visual feedback
+    startCountdown(5);
     
     updateCrashDisplay();
+}
+
+function startCountdown(seconds) {
+    let timeLeft = seconds;
+    const timerEl = document.getElementById('countdownTimer');
+    
+    const countdownInterval = setInterval(() => {
+        if (timerEl) {
+            timerEl.textContent = timeLeft;
+            
+            // Добавляем визуальные эффекты для последних секунд
+            if (timeLeft <= 2) {
+                timerEl.style.animation = 'countdown-urgent 0.5s ease-in-out infinite alternate';
+            }
+        }
+        
+        timeLeft--;
+        
+        if (timeLeft < 0) {
+            clearInterval(countdownInterval);
+            if (crashGame.gamePhase === 'betting') {
+                startFlying();
+            }
+        }
+    }, 1000);
 }
 
 function generateCrashPoint() {
@@ -150,7 +179,12 @@ function generateCrashPoint() {
 function startFlying() {
     crashGame.gamePhase = 'flying';
     crashGame.startTime = Date.now();
-    document.getElementById('crashStatus').textContent = 'Летим!';
+    
+    const statusEl = document.getElementById('crashStatus');
+    if (statusEl) {
+        statusEl.innerHTML = '<span class="status-text">Летим!</span>';
+    }
+    
     document.getElementById('betBtn').disabled = true;
     
     if (crashGame.hasBet) {
@@ -171,7 +205,7 @@ function animateMultiplier() {
     const elapsed = (Date.now() - crashGame.startTime) / 1000;
     crashGame.multiplier = 1.00 + elapsed * 0.5;
     
-    // Update rocket position
+    // Update rocket position with enhanced animation
     const progress = Math.min(elapsed / 10, 1);
     crashGame.rocketPosition.x = 50 + progress * 200;
     crashGame.rocketPosition.y = 80 - progress * 60;
@@ -181,6 +215,7 @@ function animateMultiplier() {
         rocket.style.left = crashGame.rocketPosition.x + 'px';
         rocket.style.bottom = crashGame.rocketPosition.y + '%';
         
+        // Enhanced visual effects for high multipliers
         if (crashGame.multiplier > 5.0) {
             rocket.classList.add('high-multiplier');
         }
@@ -189,8 +224,24 @@ function animateMultiplier() {
     const multiplierEl = document.getElementById('crashMultiplier');
     if (multiplierEl) {
         multiplierEl.textContent = crashGame.multiplier.toFixed(2) + 'x';
+        
+        // Enhanced styling for high multipliers
         if (crashGame.multiplier > 5.0) {
             multiplierEl.classList.add('high');
+        }
+        
+        // Add pulsing effect for very high multipliers
+        if (crashGame.multiplier > 10.0) {
+            multiplierEl.style.animation = 'mega-pulse-gold 0.3s ease-in-out infinite alternate';
+        }
+    }
+    
+    // Update cashout button amount in real-time
+    if (crashGame.hasBet) {
+        const cashoutAmount = Math.floor(crashGame.currentBet * crashGame.multiplier);
+        const cashoutBtnAmount = document.getElementById('cashoutBtnAmount');
+        if (cashoutBtnAmount) {
+            cashoutBtnAmount.textContent = `${cashoutAmount} ⭐`;
         }
     }
     
@@ -211,8 +262,21 @@ function crashRocket() {
         cancelAnimationFrame(crashGame.animationId);
     }
     
-    document.getElementById('crashStatus').textContent = `Краш на ${crashGame.crashPoint.toFixed(2)}x!`;
-    document.getElementById('crashMultiplier').textContent = crashGame.crashPoint.toFixed(2) + 'x';
+    // Enhanced crash status display
+    const statusEl = document.getElementById('crashStatus');
+    if (statusEl) {
+        statusEl.innerHTML = `<span class="status-text">💥 Краш на ${crashGame.crashPoint.toFixed(2)}x!</span>`;
+    }
+    
+    const multiplierEl = document.getElementById('crashMultiplier');
+    if (multiplierEl) {
+        multiplierEl.textContent = crashGame.crashPoint.toFixed(2) + 'x';
+        multiplierEl.classList.remove('high');
+        multiplierEl.style.animation = 'none';
+        multiplierEl.style.color = '#ff4757';
+        multiplierEl.style.textShadow = '0 0 30px rgba(255, 71, 87, 0.8)';
+    }
+    
     document.getElementById('cashoutBtn').disabled = true;
     
     const rocket = document.getElementById('crashRocket');
@@ -233,10 +297,24 @@ function crashRocket() {
     if (crashGame.hasBet) {
         showNotification(`💥 Краш! Потеряно ${crashGame.currentBet} ⭐`);
         crashGame.hasBet = false;
+        
+        // Add visual feedback for loss
+        const betBtn = document.getElementById('betBtn');
+        if (betBtn) {
+            betBtn.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                betBtn.style.animation = 'none';
+            }, 500);
+        }
     }
     
     // Start new round after delay
     setTimeout(() => {
+        // Reset multiplier display color
+        if (multiplierEl) {
+            multiplierEl.style.color = '#ff6b35';
+            multiplierEl.style.textShadow = '0 0 50px rgba(255, 107, 53, 0.9)';
+        }
         startNewRound();
     }, 3000);
 }
@@ -248,6 +326,15 @@ function placeBet() {
     const betAmount = parseInt(document.getElementById('betAmount').value) || 100;
     if (betAmount > crashGame.balance) {
         showNotification('❌ Недостаточно средств!');
+        
+        // Visual feedback for insufficient funds
+        const betBtn = document.getElementById('betBtn');
+        if (betBtn) {
+            betBtn.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                betBtn.style.animation = 'none';
+            }, 500);
+        }
         return;
     }
     
@@ -256,14 +343,29 @@ function placeBet() {
     crashGame.balance -= betAmount;
     
     document.getElementById('betBtn').disabled = true;
-    const cashoutAmount = (betAmount * crashGame.autoCashout).toFixed(0);
-    document.getElementById('cashoutBtnAmount').textContent = `${cashoutAmount} ⭐`;
+    
+    // Update cashout button with potential winnings
+    const autoCashout = parseFloat(document.getElementById('autoCashout').value) || 2.00;
+    const potentialWin = Math.floor(betAmount * autoCashout);
+    const cashoutBtnAmount = document.getElementById('cashoutBtnAmount');
+    if (cashoutBtnAmount) {
+        cashoutBtnAmount.textContent = `${potentialWin} ⭐`;
+    }
     
     playBetSound();
     if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
     
     showNotification(`✅ Ставка ${betAmount} ⭐ принята!`);
     updateCrashDisplay();
+    
+    // Visual feedback for successful bet
+    const betBtn = document.getElementById('betBtn');
+    if (betBtn) {
+        betBtn.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            betBtn.style.transform = 'scale(1)';
+        }, 150);
+    }
 }
 
 function cashOut() {
@@ -280,6 +382,24 @@ function cashOut() {
     
     showNotification(`🎉 Выиграно ${winAmount} ⭐ на ${crashGame.multiplier.toFixed(2)}x!`);
     updateCrashDisplay();
+    
+    // Visual feedback for successful cashout
+    const cashoutBtn = document.getElementById('cashoutBtn');
+    if (cashoutBtn) {
+        cashoutBtn.style.animation = 'pulse 0.6s ease-in-out';
+        setTimeout(() => {
+            cashoutBtn.style.animation = 'none';
+        }, 600);
+    }
+    
+    // Add success glow effect to multiplier
+    const multiplierEl = document.getElementById('crashMultiplier');
+    if (multiplierEl) {
+        multiplierEl.style.boxShadow = '0 0 30px rgba(76, 175, 80, 0.8)';
+        setTimeout(() => {
+            multiplierEl.style.boxShadow = 'none';
+        }, 1000);
+    }
 }
 
 function adjustBet(amount) {
@@ -289,6 +409,12 @@ function adjustBet(amount) {
         input.value = newValue;
         const btnAmount = document.getElementById('betBtnAmount');
         if (btnAmount) btnAmount.textContent = `${newValue} ⭐`;
+        
+        // Visual feedback
+        input.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            input.style.transform = 'scale(1)';
+        }, 100);
     }
     playButtonClick();
 }
@@ -298,6 +424,12 @@ function adjustAutoCashout(amount) {
     if (input) {
         const newValue = Math.max(1.01, Math.min(100, parseFloat(input.value || 2.00) + amount));
         input.value = newValue.toFixed(2);
+        
+        // Visual feedback
+        input.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            input.style.transform = 'scale(1)';
+        }, 100);
     }
     playButtonClick();
 }
@@ -308,6 +440,12 @@ function setBetAmount(amount) {
         input.value = amount;
         const btnAmount = document.getElementById('betBtnAmount');
         if (btnAmount) btnAmount.textContent = `${amount} ⭐`;
+        
+        // Visual feedback for quick bet selection
+        input.style.background = 'rgba(82, 136, 193, 0.2)';
+        setTimeout(() => {
+            input.style.background = 'transparent';
+        }, 300);
     }
     playButtonClick();
 }
@@ -331,15 +469,22 @@ function updateHistory() {
     if (!historyEl) return;
     
     historyEl.innerHTML = '';
-    crashGame.history.slice(0, 10).forEach(multiplier => {
+    crashGame.history.slice(0, 5).forEach((multiplier, index) => {
         const item = document.createElement('div');
         item.className = 'history-item';
         
+        // Enhanced color coding
         if (multiplier < 2.0) item.classList.add('low');
         else if (multiplier < 5.0) item.classList.add('medium');
         else item.classList.add('high');
         
         item.textContent = multiplier.toFixed(2) + 'x';
+        
+        // Add fade-in animation for new items
+        if (index === 0) {
+            item.style.animation = 'fadeInUp 0.3s ease-out';
+        }
+        
         historyEl.appendChild(item);
     });
 }
