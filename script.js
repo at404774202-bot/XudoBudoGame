@@ -1,4 +1,4 @@
-// Rocket Flight Game - Telegram Mini App
+// XudoBudo Crash Game - Telegram Mini App
 let tg = window.Telegram?.WebApp || {
     expand: () => console.log('TG: expand'),
     ready: () => console.log('TG: ready'),
@@ -8,12 +8,7 @@ let tg = window.Telegram?.WebApp || {
         notificationOccurred: (type) => console.log('TG: notification', type)
     },
     BackButton: { show: () => {}, hide: () => {} },
-    colorScheme: 'dark',
-    themeParams: {
-        bg_color: '#17212b', text_color: '#f5f5f5', hint_color: '#708499',
-        link_color: '#6ab3f3', button_color: '#5288c1', button_text_color: '#ffffff',
-        secondary_bg_color: '#232e3c'
-    }
+    colorScheme: 'dark'
 };
 
 // Sound System
@@ -23,8 +18,7 @@ let soundEnabled = true;
 function initAudioContext() {
     if (!audioContext) {
         try {
-            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-            audioContext = new AudioContextClass();
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
         } catch (e) {
             console.log('Audio not supported');
         }
@@ -59,60 +53,50 @@ function playButtonClick() {
     playSound(800, 0.1, 'square', 0.05);
 }
 
-function playCollectSound() {
+function playBetSound() {
     playSound(600, 0.2, 'sine', 0.08);
-    setTimeout(() => playSound(800, 0.15, 'sine', 0.06), 150);
 }
 
-function playGameOverSound() {
-    playSound(200, 0.3, 'sawtooth', 0.1);
-    setTimeout(() => playSound(100, 0.2, 'triangle', 0.08), 100);
+function playCashoutSound() {
+    playSound(800, 0.3, 'triangle', 0.1);
 }
 
+function playCrashSound() {
+    playSound(200, 0.5, 'sawtooth', 0.15);
+}
 function toggleSound() {
     soundEnabled = !soundEnabled;
     const btn = document.getElementById('soundToggle');
-    const gameBtn = document.getElementById('gameSoundBtn');
+    const crashBtn = document.getElementById('crashSoundBtn');
     
-    [btn, gameBtn].forEach(button => {
+    [btn, crashBtn].forEach(button => {
         if (button) {
             if (soundEnabled) {
-                button.textContent = '🔊';
+                button.innerHTML = '🔊';
                 button.classList.remove('muted');
             } else {
-                button.textContent = '🔇';
+                button.innerHTML = '🔇';
                 button.classList.add('muted');
             }
         }
     });
     
-    localStorage.setItem('rocket_sound', soundEnabled.toString());
+    localStorage.setItem('crash_sound', soundEnabled.toString());
 }
 
-// Game State
-let gameState = {
+// Crash Game State
+let crashGame = {
     balance: 1000,
     isPlaying: false,
-    isPaused: false,
-    score: 0,
-    multiplier: 1.0,
-    gameSpeed: 1,
-    canvas: null,
-    ctx: null,
-    rocket: {
-        x: 0,
-        y: 0,
-        width: 40,
-        height: 40,
-        velocityY: 0,
-        thrust: 0.5,
-        gravity: 0.3,
-        maxVelocity: 8
-    },
-    multipliers: [],
-    particles: [],
-    gameTime: 0,
-    lastTime: 0,
+    gamePhase: 'waiting', // waiting, betting, flying, crashed
+    multiplier: 1.00,
+    currentBet: 0,
+    autoCashout: 2.00,
+    hasBet: false,
+    startTime: 0,
+    crashPoint: 0,
+    rocketPosition: { x: 50, y: 80 },
+    history: [2.45, 1.23, 5.67, 3.21, 1.89],
     animationId: null
 };
 
@@ -124,9 +108,9 @@ function showSection(sectionName) {
     document.getElementById(sectionName).classList.add('active');
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     
-    if (sectionName === 'rocket') {
+    if (sectionName === 'crash') {
         document.querySelector(`[onclick="showSection('games')"]`).classList.add('active');
-        initializeGame();
+        initializeCrashGame();
     } else {
         const navBtn = document.querySelector(`[onclick="showSection('${sectionName}')"]`);
         if (navBtn) navBtn.classList.add('active');
@@ -135,419 +119,344 @@ function showSection(sectionName) {
     if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 }
 
-// Game Initialization
-function initializeGame() {
-    const canvas = document.getElementById('gameCanvas');
-    if (!canvas) return;
-    
-    gameState.canvas = canvas;
-    gameState.ctx = canvas.getContext('2d');
-    
-    // Set canvas size
-    const gameArea = document.getElementById('gameArea');
-    const rect = gameArea.getBoundingClientRect();
-    
-    canvas.width = rect.width;
-    canvas.height = 400;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = '400px';
-    
-    // Initialize rocket position
-    gameState.rocket.x = canvas.width / 2 - gameState.rocket.width / 2;
-    gameState.rocket.y = canvas.height - gameState.rocket.height - 20;
-    
-    // Add touch/click controls
-    canvas.addEventListener('touchstart', handleInput);
-    canvas.addEventListener('mousedown', handleInput);
-    canvas.addEventListener('touchend', handleInputEnd);
-    canvas.addEventListener('mouseup', handleInputEnd);
-    
-    // Prevent default touch behavior
-    canvas.addEventListener('touchmove', (e) => e.preventDefault());
-    
-    updateDisplay();
-    drawGame();
+// Crash Game Functions
+function initializeCrashGame() {
+    updateCrashDisplay();
+    updatePlayersList();
+    startNewRound();
 }
 
-function handleInput(e) {
-    e.preventDefault();
-    if (gameState.isPlaying && !gameState.isPaused) {
-        gameState.rocket.velocityY = -gameState.rocket.thrust * gameState.gameSpeed;
-        playSound(400, 0.1, 'square', 0.03);
+function startNewRound() {
+    crashGame.gamePhase = 'betting';
+    crashGame.multiplier = 1.00;
+    crashGame.hasBet = false;
+    crashGame.currentBet = 0;
+    crashGame.crashPoint = generateCrashPoint();
+    crashGame.rocketPosition = { x: 50, y: 80 };
+    
+    // Reset UI
+    document.getElementById('crashStatus').textContent = 'Делайте ставки!';
+    document.getElementById('crashMultiplier').textContent = '1.00x';
+    document.getElementById('betBtn').disabled = false;
+    document.getElementById('cashoutBtn').disabled = true;
+    
+    const rocket = document.getElementById('crashRocket');
+    if (rocket) {
+        rocket.className = 'rocket-container';
+        rocket.style.left = '50px';
+        rocket.style.bottom = '20%';
     }
+    
+    // Betting phase timer (5 seconds)
+    setTimeout(() => {
+        if (crashGame.gamePhase === 'betting') {
+            startFlying();
+        }
+    }, 5000);
+    
+    updateCrashDisplay();
 }
 
-function handleInputEnd(e) {
-    e.preventDefault();
+function generateCrashPoint() {
+    // Crash game algorithm - realistic distribution
+    const random = Math.random();
+    if (random < 0.5) return 1.00 + Math.random() * 1.5; // 1.00-2.50x (50%)
+    if (random < 0.8) return 2.50 + Math.random() * 2.5; // 2.50-5.00x (30%)
+    if (random < 0.95) return 5.00 + Math.random() * 5.0; // 5.00-10.00x (15%)
+    return 10.00 + Math.random() * 40.0; // 10.00-50.00x (5%)
+}
+function startFlying() {
+    crashGame.gamePhase = 'flying';
+    crashGame.startTime = Date.now();
+    document.getElementById('crashStatus').textContent = 'Летим!';
+    document.getElementById('betBtn').disabled = true;
+    
+    if (crashGame.hasBet) {
+        document.getElementById('cashoutBtn').disabled = false;
+    }
+    
+    const rocket = document.getElementById('crashRocket');
+    if (rocket) {
+        rocket.classList.add('flying');
+    }
+    
+    // Start multiplier animation
+    animateMultiplier();
 }
 
-// Game Logic
-function startGame() {
-    if (gameState.isPlaying) return;
+function animateMultiplier() {
+    if (crashGame.gamePhase !== 'flying') return;
     
-    playButtonClick();
-    initAudioContext();
+    const elapsed = (Date.now() - crashGame.startTime) / 1000;
+    crashGame.multiplier = 1.00 + elapsed * 0.5; // Increase by 0.5x per second
     
-    // Reset game state
-    gameState.isPlaying = true;
-    gameState.isPaused = false;
-    gameState.score = 0;
-    gameState.multiplier = 1.0;
-    gameState.gameSpeed = 1;
-    gameState.gameTime = 0;
-    gameState.multipliers = [];
-    gameState.particles = [];
+    // Update rocket position
+    const progress = Math.min(elapsed / 10, 1); // 10 seconds to reach top
+    crashGame.rocketPosition.x = 50 + progress * 200;
+    crashGame.rocketPosition.y = 80 - progress * 60;
     
-    // Reset rocket
-    gameState.rocket.x = gameState.canvas.width / 2 - gameState.rocket.width / 2;
-    gameState.rocket.y = gameState.canvas.height - gameState.rocket.height - 20;
-    gameState.rocket.velocityY = 0;
+    const rocket = document.getElementById('crashRocket');
+    if (rocket) {
+        rocket.style.left = crashGame.rocketPosition.x + 'px';
+        rocket.style.bottom = crashGame.rocketPosition.y + '%';
+        
+        // High multiplier effects
+        if (crashGame.multiplier > 5.0) {
+            rocket.classList.add('high-multiplier');
+        }
+    }
     
-    // Hide start button
-    document.getElementById('startButton').style.display = 'none';
-    document.getElementById('gameOver').style.display = 'none';
+    const multiplierEl = document.getElementById('crashMultiplier');
+    if (multiplierEl) {
+        multiplierEl.textContent = crashGame.multiplier.toFixed(2) + 'x';
+        if (crashGame.multiplier > 5.0) {
+            multiplierEl.classList.add('high');
+        }
+    }
     
-    // Start game loop
-    gameState.lastTime = performance.now();
-    gameLoop();
-    
-    // Generate multipliers
-    generateMultipliers();
-    
-    updateDisplay();
-    
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-}
-
-function gameLoop(currentTime) {
-    if (!gameState.isPlaying) return;
-    
-    const deltaTime = (currentTime - gameState.lastTime) / 16.67; // Normalize to 60fps
-    gameState.lastTime = currentTime;
-    gameState.gameTime += deltaTime;
-    
-    // Increase game speed over time
-    gameState.gameSpeed = 1 + (gameState.gameTime * 0.001);
-    
-    // Update rocket physics
-    updateRocket(deltaTime);
-    
-    // Update multipliers
-    updateMultipliers(deltaTime);
-    
-    // Update particles
-    updateParticles(deltaTime);
-    
-    // Check collisions
-    checkCollisions();
-    
-    // Check game over conditions
-    if (gameState.rocket.y > gameState.canvas.height) {
-        gameOver();
+    // Check for crash
+    if (crashGame.multiplier >= crashGame.crashPoint) {
+        crashRocket();
         return;
     }
     
-    // Update score
-    gameState.score += Math.floor(gameState.gameSpeed * gameState.multiplier);
-    
-    // Draw everything
-    drawGame();
-    updateDisplay();
-    
-    gameState.animationId = requestAnimationFrame(gameLoop);
+    // Continue animation
+    crashGame.animationId = requestAnimationFrame(animateMultiplier);
 }
 
-function updateRocket(deltaTime) {
-    // Apply gravity
-    gameState.rocket.velocityY += gameState.rocket.gravity * deltaTime;
+function crashRocket() {
+    crashGame.gamePhase = 'crashed';
+    crashGame.multiplier = crashGame.crashPoint;
     
-    // Limit velocity
-    if (gameState.rocket.velocityY > gameState.rocket.maxVelocity) {
-        gameState.rocket.velocityY = gameState.rocket.maxVelocity;
-    }
-    if (gameState.rocket.velocityY < -gameState.rocket.maxVelocity) {
-        gameState.rocket.velocityY = -gameState.rocket.maxVelocity;
+    if (crashGame.animationId) {
+        cancelAnimationFrame(crashGame.animationId);
     }
     
-    // Update position
-    gameState.rocket.y += gameState.rocket.velocityY * deltaTime;
+    document.getElementById('crashStatus').textContent = `Краш на ${crashGame.crashPoint.toFixed(2)}x!`;
+    document.getElementById('crashMultiplier').textContent = crashGame.crashPoint.toFixed(2) + 'x';
+    document.getElementById('cashoutBtn').disabled = true;
     
-    // Keep rocket in bounds horizontally
-    if (gameState.rocket.x < 0) gameState.rocket.x = 0;
-    if (gameState.rocket.x > gameState.canvas.width - gameState.rocket.width) {
-        gameState.rocket.x = gameState.canvas.width - gameState.rocket.width;
-    }
-}
-
-function generateMultipliers() {
-    if (!gameState.isPlaying) return;
-    
-    // Generate new multiplier
-    const multiplier = {
-        x: Math.random() * (gameState.canvas.width - 30),
-        y: -30,
-        width: 30,
-        height: 30,
-        value: 1.1 + Math.random() * 0.4, // 1.1x to 1.5x
-        collected: false,
-        speed: 2 + Math.random() * 2
-    };
-    
-    gameState.multipliers.push(multiplier);
-    
-    // Schedule next multiplier
-    const delay = Math.max(1000, 3000 - (gameState.gameTime * 2));
-    setTimeout(generateMultipliers, delay);
-}
-
-function updateMultipliers(deltaTime) {
-    gameState.multipliers.forEach((mult, index) => {
-        if (mult.collected) return;
-        
-        mult.y += mult.speed * gameState.gameSpeed * deltaTime;
-        
-        // Remove if off screen
-        if (mult.y > gameState.canvas.height + 50) {
-            gameState.multipliers.splice(index, 1);
-        }
-    });
-}
-
-function checkCollisions() {
-    gameState.multipliers.forEach((mult, index) => {
-        if (mult.collected) return;
-        
-        // Check collision with rocket
-        if (gameState.rocket.x < mult.x + mult.width &&
-            gameState.rocket.x + gameState.rocket.width > mult.x &&
-            gameState.rocket.y < mult.y + mult.height &&
-            gameState.rocket.y + gameState.rocket.height > mult.y) {
-            
-            // Collect multiplier
-            mult.collected = true;
-            gameState.multiplier += (mult.value - 1);
-            
-            // Create particles
-            createParticles(mult.x + mult.width/2, mult.y + mult.height/2);
-            
-            playCollectSound();
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            
-            // Remove multiplier
-            gameState.multipliers.splice(index, 1);
-        }
-    });
-}
-
-function createParticles(x, y) {
-    for (let i = 0; i < 8; i++) {
-        gameState.particles.push({
-            x: x,
-            y: y,
-            vx: (Math.random() - 0.5) * 8,
-            vy: (Math.random() - 0.5) * 8,
-            life: 1.0,
-            decay: 0.02 + Math.random() * 0.02
-        });
-    }
-}
-
-function updateParticles(deltaTime) {
-    gameState.particles.forEach((particle, index) => {
-        particle.x += particle.vx * deltaTime;
-        particle.y += particle.vy * deltaTime;
-        particle.life -= particle.decay * deltaTime;
-        
-        if (particle.life <= 0) {
-            gameState.particles.splice(index, 1);
-        }
-    });
-}
-
-function drawGame() {
-    const ctx = gameState.ctx;
-    const canvas = gameState.canvas;
-    
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw background gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#0a0a1a');
-    gradient.addColorStop(0.5, '#1a1a3a');
-    gradient.addColorStop(1, '#2a2a4a');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw stars
-    drawStars(ctx, canvas);
-    
-    // Draw multipliers
-    gameState.multipliers.forEach(mult => {
-        if (!mult.collected) {
-            drawMultiplier(ctx, mult);
-        }
-    });
-    
-    // Draw particles
-    gameState.particles.forEach(particle => {
-        drawParticle(ctx, particle);
-    });
-    
-    // Draw rocket
-    drawRocket(ctx);
-}
-
-function drawStars(ctx, canvas) {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    for (let i = 0; i < 50; i++) {
-        const x = (i * 37) % canvas.width;
-        const y = ((i * 23) + gameState.gameTime * 0.5) % canvas.height;
-        const size = 1 + (i % 3);
-        ctx.fillRect(x, y, size, size);
-    }
-}
-
-function drawRocket(ctx) {
-    const rocket = gameState.rocket;
-    
-    // Draw rocket body
-    ctx.fillStyle = '#ff6b35';
-    ctx.fillRect(rocket.x + 10, rocket.y + 5, 20, 30);
-    
-    // Draw rocket nose
-    ctx.fillStyle = '#ff4757';
-    ctx.beginPath();
-    ctx.moveTo(rocket.x + 20, rocket.y);
-    ctx.lineTo(rocket.x + 10, rocket.y + 10);
-    ctx.lineTo(rocket.x + 30, rocket.y + 10);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Draw rocket fins
-    ctx.fillStyle = '#ff3742';
-    ctx.fillRect(rocket.x + 5, rocket.y + 25, 10, 15);
-    ctx.fillRect(rocket.x + 25, rocket.y + 25, 10, 15);
-    
-    // Draw thrust effect if moving up
-    if (rocket.velocityY < 0) {
-        ctx.fillStyle = '#ffaa00';
-        ctx.beginPath();
-        ctx.moveTo(rocket.x + 15, rocket.y + 40);
-        ctx.lineTo(rocket.x + 20, rocket.y + 50 + Math.random() * 10);
-        ctx.lineTo(rocket.x + 25, rocket.y + 40);
-        ctx.closePath();
-        ctx.fill();
-    }
-}
-
-function drawMultiplier(ctx, mult) {
-    // Draw multiplier background
-    ctx.fillStyle = '#4caf50';
-    ctx.fillRect(mult.x, mult.y, mult.width, mult.height);
-    
-    // Draw multiplier border
-    ctx.strokeStyle = '#66bb6a';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(mult.x, mult.y, mult.width, mult.height);
-    
-    // Draw multiplier text
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(`x${mult.value.toFixed(1)}`, mult.x + mult.width/2, mult.y + mult.height/2 + 4);
-}
-
-function drawParticle(ctx, particle) {
-    ctx.fillStyle = `rgba(76, 175, 80, ${particle.life})`;
-    ctx.fillRect(particle.x - 2, particle.y - 2, 4, 4);
-}
-
-function gameOver() {
-    gameState.isPlaying = false;
-    
-    if (gameState.animationId) {
-        cancelAnimationFrame(gameState.animationId);
+    const rocket = document.getElementById('crashRocket');
+    if (rocket) {
+        rocket.classList.remove('flying', 'high-multiplier');
+        rocket.classList.add('crashed');
     }
     
-    playGameOverSound();
+    playCrashSound();
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
     
-    // Update balance
-    const earnedStars = Math.floor(gameState.score / 100);
-    gameState.balance += earnedStars;
+    // Add to history
+    crashGame.history.unshift(crashGame.crashPoint);
+    if (crashGame.history.length > 10) crashGame.history.pop();
+    updateHistory();
     
-    // Show game over screen
-    document.getElementById('finalScore').textContent = gameState.score;
-    document.getElementById('finalMultiplier').textContent = `x${gameState.multiplier.toFixed(1)}`;
-    document.getElementById('gameOver').style.display = 'block';
-    
-    updateBalance();
-    saveGameData();
-}
-
-function restartGame() {
-    document.getElementById('startButton').style.display = 'block';
-    document.getElementById('gameOver').style.display = 'none';
-    
-    // Reset display
-    gameState.score = 0;
-    gameState.multiplier = 1.0;
-    updateDisplay();
-    
-    // Clear canvas
-    if (gameState.ctx) {
-        gameState.ctx.clearRect(0, 0, gameState.canvas.width, gameState.canvas.height);
+    // If player had bet and didn't cash out - lose money
+    if (crashGame.hasBet) {
+        showNotification(`💥 Краш! Потеряно ${crashGame.currentBet} ⭐`);
+        crashGame.hasBet = false;
     }
-}
-
-function updateDisplay() {
-    document.getElementById('score').textContent = gameState.score;
-    document.getElementById('multiplier').textContent = `x${gameState.multiplier.toFixed(1)}`;
     
-    if (gameState.isPlaying) {
-        document.getElementById('gameStatus').textContent = `Скорость: ${gameState.gameSpeed.toFixed(1)}x`;
-    } else {
-        document.getElementById('gameStatus').textContent = 'Нажми для старта';
-    }
+    // Start new round after delay
+    setTimeout(() => {
+        startNewRound();
+    }, 3000);
 }
 
-function updateBalance() {
-    const balanceElements = ['headerBalance', 'gameBalance'];
+function placeBet() {
+    if (crashGame.gamePhase !== 'betting') return;
+    
+    const betAmount = parseInt(document.getElementById('betAmount').value) || 100;
+    if (betAmount > crashGame.balance) {
+        showNotification('❌ Недостаточно средств!');
+        return;
+    }
+    
+    crashGame.currentBet = betAmount;
+    crashGame.hasBet = true;
+    crashGame.balance -= betAmount;
+    
+    document.getElementById('betBtn').disabled = true;
+    const cashoutAmount = (betAmount * crashGame.autoCashout).toFixed(0);
+    document.getElementById('cashoutBtnAmount').textContent = `${cashoutAmount} ⭐`;
+    
+    playBetSound();
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    
+    showNotification(`✅ Ставка ${betAmount} ⭐ принята!`);
+    updateCrashDisplay();
+}
+
+function cashOut() {
+    if (crashGame.gamePhase !== 'flying' || !crashGame.hasBet) return;
+    
+    const winAmount = Math.floor(crashGame.currentBet * crashGame.multiplier);
+    crashGame.balance += winAmount;
+    crashGame.hasBet = false;
+    
+    document.getElementById('cashoutBtn').disabled = true;
+    
+    playCashoutSound();
+    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    
+    showNotification(`🎉 Выиграно ${winAmount} ⭐ на ${crashGame.multiplier.toFixed(2)}x!`);
+    updateCrashDisplay();
+}
+function adjustBet(amount) {
+    const input = document.getElementById('betAmount');
+    if (input) {
+        const newValue = Math.max(10, Math.min(10000, parseInt(input.value || 100) + amount));
+        input.value = newValue;
+        const btnAmount = document.getElementById('betBtnAmount');
+        if (btnAmount) btnAmount.textContent = `${newValue} ⭐`;
+    }
+    playButtonClick();
+}
+
+function adjustAutoCashout(amount) {
+    const input = document.getElementById('autoCashout');
+    if (input) {
+        const newValue = Math.max(1.01, Math.min(100, parseFloat(input.value || 2.00) + amount));
+        input.value = newValue.toFixed(2);
+    }
+    playButtonClick();
+}
+
+function setBetAmount(amount) {
+    const input = document.getElementById('betAmount');
+    if (input) {
+        input.value = amount;
+        const btnAmount = document.getElementById('betBtnAmount');
+        if (btnAmount) btnAmount.textContent = `${amount} ⭐`;
+    }
+    playButtonClick();
+}
+
+function updateCrashDisplay() {
+    // Update balance displays
+    const balanceElements = ['headerBalance', 'crashBalance', 'profileBalance'];
     balanceElements.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.textContent = gameState.balance.toLocaleString();
+        if (el) el.textContent = crashGame.balance.toLocaleString();
+    });
+    
+    // Update bet button amount
+    const betInput = document.getElementById('betAmount');
+    if (betInput) {
+        const btnAmount = document.getElementById('betBtnAmount');
+        if (btnAmount) btnAmount.textContent = `${betInput.value || 100} ⭐`;
+    }
+}
+
+function updateHistory() {
+    const historyEl = document.getElementById('crashHistory');
+    if (!historyEl) return;
+    
+    historyEl.innerHTML = '';
+    crashGame.history.slice(0, 10).forEach(multiplier => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        
+        if (multiplier < 2.0) item.classList.add('low');
+        else if (multiplier < 5.0) item.classList.add('medium');
+        else item.classList.add('high');
+        
+        item.textContent = multiplier.toFixed(2) + 'x';
+        historyEl.appendChild(item);
     });
 }
 
-function saveGameData() {
-    try {
-        localStorage.setItem('rocket_balance', gameState.balance.toString());
-    } catch (e) {
-        console.log('Save error:', e);
-    }
-}
-
-function loadGameData() {
-    try {
-        const saved = localStorage.getItem('rocket_balance');
-        if (saved) gameState.balance = Math.max(1, parseInt(saved));
+function updatePlayersList() {
+    const playersEl = document.getElementById('playersList');
+    if (!playersEl) return;
+    
+    const players = [
+        { name: 'Игрок1', bet: 150, status: 'waiting', avatar: 'И1', country: '🇷🇺' },
+        { name: 'Игрок2', bet: 200, status: 'betting', avatar: 'И2', country: '🇺🇸' },
+        { name: 'Игрок3', bet: 75, status: 'cashed', avatar: 'И3', country: '🇩🇪' },
+        { name: 'Вы', bet: crashGame.currentBet, status: crashGame.hasBet ? 'betting' : 'waiting', avatar: 'ВЫ', country: '🇷🇺', isCurrentUser: true }
+    ];
+    
+    playersEl.innerHTML = '';
+    players.forEach(player => {
+        const item = document.createElement('div');
+        item.className = 'player-item';
+        if (player.isCurrentUser) item.classList.add('current-user');
         
-        const soundSaved = localStorage.getItem('rocket_sound');
-        if (soundSaved !== null) {
-            soundEnabled = soundSaved === 'true';
-            toggleSound();
-            toggleSound(); // Call twice to set correct state
-        }
-    } catch (e) {
-        console.log('Load error:', e);
+        item.innerHTML = `
+            <div class="player-avatar-container">
+                <div class="player-avatar-placeholder">${player.avatar}</div>
+                <div class="country-flag">${player.country}</div>
+            </div>
+            <div class="player-info">
+                <div class="player-name">${player.name}</div>
+                <div class="player-username">@${player.name.toLowerCase()}</div>
+            </div>
+            <div class="player-status">
+                <div class="status-badge ${player.status}">${getStatusText(player.status)}</div>
+            </div>
+        `;
+        
+        playersEl.appendChild(item);
+    });
+}
+
+function getStatusText(status) {
+    switch (status) {
+        case 'waiting': return 'Ожидание';
+        case 'betting': return 'Ставка';
+        case 'cashed': return 'Забрал';
+        case 'crashed': return 'Краш';
+        default: return 'Ожидание';
     }
 }
 
-// Modal functions (simplified)
+// Modal functions
 function openTopUpModal() {
     playButtonClick();
     showNotification('💰 Пополнение баланса недоступно в демо версии');
+}
+
+function openPromoModal() {
+    playButtonClick();
+    const modal = document.getElementById('promoModal');
+    if (modal) {
+        modal.classList.add('active');
+        modal.style.display = 'flex';
+    }
+}
+
+function closePromoModal() {
+    playButtonClick();
+    const modal = document.getElementById('promoModal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
+}
+
+function activatePromo() {
+    const input = document.getElementById('promoInput');
+    if (!input) return;
+    
+    const code = input.value.toUpperCase().trim();
+    const promoCodes = {
+        'START': 500,
+        'BONUS': 1000,
+        'WELCOME': 250,
+        'GAME': 750,
+        'CRASH': 300
+    };
+    
+    if (promoCodes[code]) {
+        crashGame.balance += promoCodes[code];
+        showNotification(`🎉 Промокод активирован! +${promoCodes[code]} ⭐`);
+        input.value = '';
+        closePromoModal();
+        updateCrashDisplay();
+        playBetSound();
+    } else {
+        showNotification('❌ Неверный промокод');
+    }
 }
 
 function showNotification(message) {
@@ -562,25 +471,159 @@ function showNotification(message) {
     }, 3000);
 }
 
+function saveGameData() {
+    try {
+        localStorage.setItem('crash_balance', crashGame.balance.toString());
+        localStorage.setItem('crash_history', JSON.stringify(crashGame.history));
+    } catch (e) {
+        console.log('Save error:', e);
+    }
+}
+
+function loadGameData() {
+    try {
+        const savedBalance = localStorage.getItem('crash_balance');
+        if (savedBalance) crashGame.balance = Math.max(100, parseInt(savedBalance));
+        
+        const savedHistory = localStorage.getItem('crash_history');
+        if (savedHistory) crashGame.history = JSON.parse(savedHistory);
+        
+        const soundSaved = localStorage.getItem('crash_sound');
+        if (soundSaved !== null) {
+            soundEnabled = soundSaved === 'true';
+            toggleSound();
+            toggleSound(); // Call twice to set correct state
+        }
+    } catch (e) {
+        console.log('Load error:', e);
+    }
+}
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', function() {
     loadGameData();
-    updateBalance();
+    updateCrashDisplay();
     
     // Initialize Telegram WebApp
     if (tg.ready) tg.ready();
     if (tg.expand) tg.expand();
-});
-
-// Handle page visibility
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden && gameState.isPlaying) {
-        gameState.isPaused = true;
-    } else if (!document.hidden && gameState.isPaused) {
-        gameState.isPaused = false;
-        gameState.lastTime = performance.now();
-        if (gameState.isPlaying) {
-            gameLoop();
-        }
+    
+    // Set up input event listeners
+    const betInput = document.getElementById('betAmount');
+    if (betInput) {
+        betInput.addEventListener('input', () => {
+            const btnAmount = document.getElementById('betBtnAmount');
+            if (btnAmount) btnAmount.textContent = `${betInput.value || 100} ⭐`;
+        });
     }
 });
+
+// Auto-save game data periodically
+setInterval(saveGameData, 10000); // Save every 10 seconds
+// Missing functions for HTML buttons
+
+function closeTopUpModal() {
+    playButtonClick();
+    const modal = document.getElementById('topUpModal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
+}
+
+function setQuickAmount(amount) {
+    playButtonClick();
+    const input = document.getElementById('topUpAmount');
+    if (input) {
+        input.value = amount;
+    }
+    showNotification(`Выбрано ${amount} ⭐`);
+}
+
+function purchaseFromInput() {
+    playButtonClick();
+    const input = document.getElementById('topUpAmount');
+    const amount = input ? parseInt(input.value) || 100 : 100;
+    
+    // Simulate purchase (in real app would use Telegram Stars)
+    showNotification(`💰 Покупка ${amount} ⭐ недоступна в демо версии`);
+}
+
+function activatePromoCode() {
+    const input = document.getElementById('promoInput');
+    if (!input) return;
+    
+    const code = input.value.toUpperCase().trim();
+    const promoCodes = {
+        'START': 500,
+        'BONUS': 1000,
+        'WELCOME': 250,
+        'GAME': 750,
+        'CRASH': 300
+    };
+    
+    if (promoCodes[code]) {
+        crashGame.balance += promoCodes[code];
+        showNotification(`🎉 Промокод активирован! +${promoCodes[code]} ⭐`);
+        input.value = '';
+        closePromoModal();
+        updateCrashDisplay();
+        playBetSound();
+        saveGameData();
+    } else {
+        showNotification('❌ Неверный промокод');
+    }
+}
+
+// Fix the existing openTopUpModal function
+function openTopUpModal() {
+    playButtonClick();
+    const modal = document.getElementById('topUpModal');
+    if (modal) {
+        modal.classList.add('active');
+        modal.style.display = 'flex';
+    }
+}
+// Additional missing functions for bet adjustment buttons
+
+// These functions should already exist but let's make sure they work with current HTML structure
+function adjustBet(amount) {
+    const input = document.getElementById('betAmount');
+    if (input) {
+        const currentValue = parseInt(input.value) || 100;
+        const newValue = Math.max(10, Math.min(10000, currentValue + amount));
+        input.value = newValue;
+        
+        // Update button display
+        const btnAmount = document.getElementById('betBtnAmount');
+        if (btnAmount) {
+            btnAmount.textContent = `${newValue} ⭐`;
+        }
+    }
+    playButtonClick();
+}
+
+function adjustAutoCashout(amount) {
+    const input = document.getElementById('autoCashout');
+    if (input) {
+        const currentValue = parseFloat(input.value) || 2.00;
+        const newValue = Math.max(1.01, Math.min(100, currentValue + amount));
+        input.value = newValue.toFixed(2);
+    }
+    playButtonClick();
+}
+
+// Make sure balance updates work correctly
+function updateBalance() {
+    const balanceElements = ['headerBalance', 'crashBalance', 'profileBalance'];
+    balanceElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = crashGame.balance.toLocaleString();
+    });
+}
+
+// Initialize balance display on page load
+function initializeBalanceDisplay() {
+    updateBalance();
+    updateCrashDisplay();
+}
