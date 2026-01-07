@@ -152,42 +152,40 @@ body {
     text-transform: uppercase;
 }
 
-/* Crash Game */
-.crash-game {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 140px);
-    background: var(--tg-theme-bg-color);
-}
+/* ОПТИМИЗИРОВАННАЯ CRASH ИГРА - АДАПТИВНЫЙ ДИЗАЙН */
 
-.crash-header {
+/* Компактный header */
+.crash-header-compact {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
+    padding: 12px 16px;
     background: var(--tg-theme-secondary-bg-color);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    min-height: 60px;
 }
 
-.back-button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.back-button-compact {
+    width: 44px;
+    height: 44px;
     background: rgba(255, 255, 255, 0.1);
     color: var(--tg-theme-text-color);
     border: none;
-    padding: 12px 16px;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-weight: 600;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.back-button:hover {
-    background: rgba(255, 255, 255, 0.15);
+.back-button-compact:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.2);
 }
 
-.balance-display {
+.balance-compact {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -196,158 +194,382 @@ body {
     padding: 12px 20px;
     border-radius: 16px;
     font-weight: 700;
+    font-size: 16px;
 }
 
-.sound-toggle {
-    width: 48px;
-    height: 48px;
+.sound-toggle-compact {
+    width: 44px;
+    height: 44px;
     background: rgba(255, 255, 255, 0.1);
     color: var(--tg-theme-text-color);
     border: none;
     border-radius: 12px;
     cursor: pointer;
-    transition: all 0.3s ease;
     font-size: 18px;
+    transition: all 0.3s ease;
 }
 
-.sound-toggle:hover {
-    background: rgba(255, 255, 255, 0.15);
+.sound-toggle-compact:active {
+    transform: scale(0.95);
 }
 
-.sound-toggle.muted {
+.sound-toggle-compact.muted {
     background: rgba(255, 0, 0, 0.1);
     color: #ff6b6b;
 }
 
-/* Game Area */
-.game-area {
-    flex: 1;
+/* ПОЛНОЭКРАННАЯ игровая область */
+.game-area-fullscreen {
     position: relative;
-    background: linear-gradient(135deg, rgba(10, 10, 20, 0.95) 0%, rgba(26, 26, 46, 0.95) 50%, rgba(22, 33, 62, 0.95) 100%);
-    margin: 16px;
-    border-radius: 20px;
+    background: linear-gradient(135deg, 
+        rgba(10, 10, 20, 0.95) 0%, 
+        rgba(26, 26, 46, 0.95) 50%, 
+        rgba(22, 33, 62, 0.95) 100%);
+    margin: 0;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 280px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 50vh;
+    border: none;
+    overflow: hidden;
 }
 
-.game-status {
+/* Компактный статус игры */
+.game-status-compact {
     position: absolute;
     top: 20px;
     left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     background: rgba(0, 0, 0, 0.8);
     color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
+    padding: 12px 20px;
+    border-radius: 25px;
     font-size: 14px;
     font-weight: 600;
     z-index: 20;
+    backdrop-filter: blur(20px);
 }
 
-.multiplier-display {
-    font-size: 64px;
+.countdown-timer {
+    background: var(--tg-theme-button-color);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    animation: countdown-pulse 1s ease-in-out infinite;
+}
+
+@keyframes countdown-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* МЕГА-МНОЖИТЕЛЬ - главный элемент */
+.multiplier-display-mega {
+    font-size: 80px;
     font-weight: 900;
     color: #ff6b35;
-    text-shadow: 0 0 40px rgba(255, 107, 53, 0.8);
+    text-shadow: 0 0 50px rgba(255, 107, 53, 0.9);
     z-index: 20;
     user-select: none;
+    transition: all 0.1s ease;
+    text-align: center;
+    line-height: 1;
 }
 
-.multiplier-display.high {
+.multiplier-display-mega.high {
+    font-size: 90px;
     color: #FFD700;
-    text-shadow: 0 0 50px rgba(255, 215, 0, 1);
-    animation: pulse-gold 0.5s ease-in-out infinite alternate;
+    text-shadow: 0 0 60px rgba(255, 215, 0, 1);
+    animation: mega-pulse-gold 0.4s ease-in-out infinite alternate;
 }
 
-@keyframes pulse-gold {
-    0% { transform: scale(1.1); }
-    100% { transform: scale(1.15); }
+@keyframes mega-pulse-gold {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.05); }
 }
 
-.game-canvas {
+/* Улучшенная ракета */
+.rocket-container-enhanced {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    border-radius: 20px;
-}
-
-/* Rocket Animation */
-.rocket-container {
-    position: absolute;
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     z-index: 15;
     left: 50px;
     bottom: 20%;
     transition: all 0.08s ease;
 }
 
-.rocket-sprite {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    filter: brightness(1.3) drop-shadow(0 0 12px rgba(255, 107, 53, 0.7));
-}
-
-.rocket-trail {
-    position: absolute;
-    width: 80px;
-    height: 6px;
-    background: linear-gradient(90deg, rgba(255, 107, 53, 0.9) 0%, transparent 100%);
-    left: -70px;
-    top: 50%;
-    transform: translateY(-50%);
-    border-radius: 3px;
-    opacity: 0;
-    transition: all 0.3s ease;
-}
-
-.rocket-glow {
+.rocket-trail-enhanced {
     position: absolute;
     width: 100px;
-    height: 100px;
-    background: radial-gradient(circle, rgba(255, 107, 53, 0.4) 0%, transparent 70%);
-    left: -25px;
-    top: -25px;
+    height: 8px;
+    background: linear-gradient(90deg, 
+        rgba(255, 107, 53, 0.9) 0%, 
+        rgba(255, 107, 53, 0.6) 40%, 
+        transparent 100%);
+    left: -90px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 4px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(255, 107, 53, 0.6);
+}
+
+.rocket-glow-enhanced {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, 
+        rgba(255, 107, 53, 0.5) 0%, 
+        rgba(255, 107, 53, 0.2) 40%,
+        transparent 70%);
+    left: -30px;
+    top: -30px;
     border-radius: 50%;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
-.rocket-container.flying {
-    animation: smooth-flight 0.4s ease-in-out infinite alternate;
+.rocket-container-enhanced.flying .rocket-trail-enhanced {
+    opacity: 0.9;
+    animation: enhanced-trail 0.3s ease-in-out infinite alternate;
 }
 
-@keyframes smooth-flight {
-    0% { transform: translateY(0px); }
-    100% { transform: translateY(-3px); }
+@keyframes enhanced-trail {
+    0% { 
+        opacity: 0.7;
+        transform: translateY(-50%) scaleX(1);
+    }
+    100% { 
+        opacity: 1;
+        transform: translateY(-50%) scaleX(1.2);
+    }
 }
 
-.rocket-container.flying .rocket-trail {
-    opacity: 0.8;
+.rocket-container-enhanced.flying .rocket-glow-enhanced {
+    opacity: 0.7;
+    animation: enhanced-glow 1s ease-in-out infinite alternate;
 }
 
-.rocket-container.flying .rocket-glow {
-    opacity: 0.6;
+@keyframes enhanced-glow {
+    0% { 
+        opacity: 0.5;
+        transform: scale(1);
+    }
+    100% { 
+        opacity: 0.8;
+        transform: scale(1.3);
+    }
 }
 
-.rocket-container.high-multiplier .rocket-sprite {
-    filter: brightness(1.6) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+/* Компактная история */
+.history-compact {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 6px;
+    z-index: 20;
 }
 
-.rocket-container.crashed {
-    animation: crash-explosion 0.8s ease-out forwards;
+.history-compact .history-item {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    min-width: 50px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-@keyframes crash-explosion {
-    0% { transform: scale(1) rotate(0deg); opacity: 1; }
-    50% { transform: scale(1.8) rotate(180deg); opacity: 0.7; }
-    100% { transform: scale(0.2) rotate(360deg); opacity: 0; }
+/* ОПТИМИЗИРОВАННАЯ панель ставок */
+.betting-panel-optimized {
+    background: var(--tg-theme-secondary-bg-color);
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Увеличенные быстрые ставки */
+.quick-bets-enhanced {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.quick-bet-large {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--tg-theme-text-color);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 70px;
+    position: relative;
+    overflow: hidden;
+}
+
+.quick-bet-large:active {
+    transform: scale(0.95);
+    background: rgba(82, 136, 193, 0.2);
+    border-color: var(--tg-theme-button-color);
+}
+
+.bet-amount {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.bet-currency {
+    font-size: 14px;
+    color: var(--tg-theme-button-color);
+    font-weight: 600;
+}
+
+/* Компактные настройки */
+.bet-settings-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.bet-input-enhanced, .auto-cashout-enhanced {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bet-input-enhanced label, .auto-cashout-enhanced label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tg-theme-hint-color);
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.input-with-controls {
+    display: flex;
+    align-items: center;
+    background: var(--tg-theme-bg-color);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.control-btn-large {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--tg-theme-text-color);
+    border: none;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 24px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn-large:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+}
+
+.bet-input-large, .cashout-input-large {
+    flex: 1;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    color: var(--tg-theme-text-color);
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+}
+
+/* МЕГА-КНОПКИ действий */
+.action-buttons-mega {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.bet-button-mega, .cashout-button-mega {
+    padding: 20px;
+    border: none;
+    border-radius: 20px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 80px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.bet-button-mega {
+    background: linear-gradient(135deg, var(--tg-theme-button-color), #4a7bc8);
+    color: var(--tg-theme-button-text-color);
+}
+
+.cashout-button-mega {
+    background: linear-gradient(135deg, #4caf50, #45a049);
+    color: white;
+}
+
+.bet-button-mega:not(:disabled):active, .cashout-button-mega:not(:disabled):active {
+    transform: scale(0.95);
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
+}
+
+.bet-button-mega:disabled, .cashout-button-mega:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.button-content-mega {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.button-icon {
+    font-size: 24px;
+}
+
+.button-text-large {
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.button-amount-large {
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: 600;
 }
 /* Game History */
 .game-history {
@@ -710,6 +932,19 @@ body {
     color: #F44336;
 }
 
+/* Section Headers */
+.section-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.section-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--tg-theme-text-color);
+    margin-bottom: 8px;
+}
+
 /* Freebies Section */
 .freebies-container {
     display: flex;
@@ -722,50 +957,110 @@ body {
 .freebie-card {
     background: var(--tg-theme-secondary-bg-color);
     border-radius: 20px;
-    padding: 32px 24px;
+    padding: 40px 32px;
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.08);
     transition: all 0.3s ease;
-    max-width: 320px;
+    max-width: 350px;
     width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.freebie-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--tg-theme-button-color), #4a7bc8);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .freebie-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.freebie-card:hover::before {
+    opacity: 1;
 }
 
 .freebie-icon {
-    font-size: 56px;
-    margin-bottom: 20px;
+    font-size: 64px;
+    margin-bottom: 24px;
     display: block;
+    animation: bounce 2s infinite;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
 }
 
 .freebie-card h3 {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 12px;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    color: var(--tg-theme-text-color);
+    background: linear-gradient(135deg, var(--tg-theme-text-color), var(--tg-theme-button-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .freebie-card p {
-    font-size: 15px;
+    font-size: 16px;
     color: var(--tg-theme-hint-color);
-    margin-bottom: 24px;
+    margin-bottom: 28px;
+    line-height: 1.6;
+    opacity: 0.9;
 }
 
 .freebie-card button {
     background: linear-gradient(135deg, var(--tg-theme-button-color), #4a7bc8);
     color: var(--tg-theme-button-text-color);
     border: none;
-    padding: 14px 32px;
-    border-radius: 14px;
+    padding: 16px 40px;
+    border-radius: 16px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 16px rgba(82, 136, 193, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.freebie-card button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.freebie-card button:hover::before {
+    left: 100%;
+}
+
+.freebie-card button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(82, 136, 193, 0.4);
 }
 
 .freebie-card button:active {
-    transform: scale(0.96);
+    transform: scale(0.98);
 }
 
 /* Profile Section */
@@ -1042,16 +1337,149 @@ body {
     to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
 }
 
-/* Mobile Responsive */
+/* АДАПТИВНЫЙ ДИЗАЙН - ОПТИМИЗАЦИЯ ДЛЯ ВСЕХ УСТРОЙСТВ */
+
+/* Мобильные устройства (до 480px) */
 @media (max-width: 480px) {
     .header {
         padding: 12px 16px;
     }
     
     .section {
-        padding: 16px 12px;
+        padding: 0;
     }
     
+    .section-header h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+    
+    /* Crash игра - мобильная оптимизация */
+    .crash-header-compact {
+        padding: 10px 12px;
+        min-height: 56px;
+    }
+    
+    .back-button-compact, .sound-toggle-compact {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .balance-compact {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    .game-area-fullscreen {
+        min-height: 45vh;
+    }
+    
+    .game-status-compact {
+        top: 12px;
+        left: 12px;
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+    
+    .countdown-timer {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+    }
+    
+    /* МЕГА-множитель на мобильном */
+    .multiplier-display-mega {
+        font-size: 60px;
+    }
+    
+    .multiplier-display-mega.high {
+        font-size: 70px;
+    }
+    
+    .rocket-container-enhanced {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .history-compact {
+        top: 12px;
+        right: 12px;
+        gap: 4px;
+    }
+    
+    .history-compact .history-item {
+        padding: 4px 8px;
+        font-size: 10px;
+        min-width: 40px;
+    }
+    
+    /* Панель ставок - мобильная */
+    .betting-panel-optimized {
+        padding: 16px;
+    }
+    
+    .quick-bets-enhanced {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
+    .quick-bet-large {
+        padding: 12px 8px;
+        min-height: 60px;
+        border-radius: 12px;
+    }
+    
+    .bet-amount {
+        font-size: 16px;
+    }
+    
+    .bet-currency {
+        font-size: 12px;
+    }
+    
+    .bet-settings-compact {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .control-btn-large {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+    }
+    
+    .bet-input-large, .cashout-input-large {
+        font-size: 16px;
+        padding: 10px 12px;
+    }
+    
+    .action-buttons-mega {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .bet-button-mega, .cashout-button-mega {
+        padding: 16px;
+        min-height: 70px;
+        border-radius: 16px;
+    }
+    
+    .button-icon {
+        font-size: 20px;
+    }
+    
+    .button-text-large {
+        font-size: 14px;
+    }
+    
+    .button-amount-large {
+        font-size: 12px;
+    }
+    
+    /* Остальные секции */
     .game-card {
         padding: 20px;
         flex-direction: column;
@@ -1064,41 +1492,34 @@ body {
         font-size: 36px;
     }
     
-    .crash-header {
-        padding: 12px 16px;
-    }
-    
-    .game-area {
-        margin: 12px;
-        min-height: 220px;
-    }
-    
-    .multiplier-display {
-        font-size: 48px;
-    }
-    
-    .rocket-container {
-        width: 40px;
-        height: 40px;
-    }
-    
-    .betting-panel {
+    .freebies-container {
         padding: 16px;
+        min-height: 250px;
     }
     
-    .bet-controls {
-        grid-template-columns: 1fr;
-        gap: 12px;
+    .freebie-card {
+        padding: 32px 24px;
+        max-width: 100%;
     }
     
-    .action-buttons {
-        grid-template-columns: 1fr;
-        gap: 8px;
+    .freebie-icon {
+        font-size: 56px;
+        margin-bottom: 20px;
     }
     
-    .players-section {
-        padding: 16px;
-        max-height: 200px;
+    .freebie-card h3 {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+    
+    .freebie-card p {
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+    
+    .freebie-card button {
+        padding: 14px 32px;
+        font-size: 14px;
     }
     
     .stats {
@@ -1110,4 +1531,384 @@ body {
         margin: 10px;
         max-width: calc(100% - 20px);
     }
+}
+
+/* Очень маленькие экраны (до 360px) */
+@media (max-width: 360px) {
+    .crash-header-compact {
+        padding: 8px 10px;
+        min-height: 52px;
+    }
+    
+    .back-button-compact, .sound-toggle-compact {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    .balance-compact {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    
+    .game-area-fullscreen {
+        min-height: 40vh;
+    }
+    
+    .multiplier-display-mega {
+        font-size: 50px;
+    }
+    
+    .multiplier-display-mega.high {
+        font-size: 60px;
+    }
+    
+    .quick-bets-enhanced {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    
+    .quick-bet-large {
+        padding: 10px 6px;
+        min-height: 55px;
+    }
+    
+    .bet-amount {
+        font-size: 14px;
+    }
+    
+    .control-btn-large {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .bet-button-mega, .cashout-button-mega {
+        padding: 14px;
+        min-height: 65px;
+    }
+    
+    .button-text-large {
+        font-size: 13px;
+    }
+}
+
+/* Планшеты (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .game-area-fullscreen {
+        min-height: 55vh;
+    }
+    
+    .multiplier-display-mega {
+        font-size: 90px;
+    }
+    
+    .multiplier-display-mega.high {
+        font-size: 100px;
+    }
+    
+    .quick-bets-enhanced {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+    
+    .quick-bet-large {
+        min-height: 80px;
+        padding: 20px 16px;
+    }
+    
+    .bet-amount {
+        font-size: 20px;
+    }
+    
+    .bet-currency {
+        font-size: 16px;
+    }
+    
+    .action-buttons-mega {
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .bet-button-mega, .cashout-button-mega {
+        min-height: 90px;
+        padding: 24px;
+    }
+    
+    .button-icon {
+        font-size: 28px;
+    }
+    
+    .button-text-large {
+        font-size: 18px;
+    }
+}
+
+/* Десктоп (769px+) */
+@media (min-width: 769px) {
+    .game-area-fullscreen {
+        min-height: 60vh;
+    }
+    
+    .multiplier-display-mega {
+        font-size: 100px;
+    }
+    
+    .multiplier-display-mega.high {
+        font-size: 110px;
+    }
+    
+    .betting-panel-optimized {
+        padding: 24px;
+    }
+    
+    .quick-bets-enhanced {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+    
+    .quick-bet-large {
+        min-height: 90px;
+        padding: 24px 20px;
+    }
+    
+    .bet-amount {
+        font-size: 22px;
+    }
+    
+    .action-buttons-mega {
+        gap: 24px;
+    }
+    
+    .bet-button-mega, .cashout-button-mega {
+        min-height: 100px;
+        padding: 28px;
+    }
+    
+    .button-icon {
+        font-size: 32px;
+    }
+    
+    .button-text-large {
+        font-size: 20px;
+    }
+}
+
+/* Ландшафтная ориентация на мобильных */
+@media (max-width: 768px) and (orientation: landscape) {
+    .game-area-fullscreen {
+        min-height: 35vh;
+    }
+    
+    .multiplier-display-mega {
+        font-size: 50px;
+    }
+    
+    .betting-panel-optimized {
+        padding: 12px;
+    }
+    
+    .quick-bets-enhanced {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    
+    .quick-bet-large {
+        min-height: 50px;
+        padding: 8px 6px;
+    }
+    
+    .bet-settings-compact {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .action-buttons-mega {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .bet-button-mega, .cashout-button-mega {
+        min-height: 60px;
+        padding: 12px;
+    }
+}
+/* Дополнительные анимации для улучшенного UX */
+@keyframes countdown-urgent {
+    0% { 
+        background: #ff6b35;
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+    }
+    100% { 
+        background: #ff4757;
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(255, 71, 87, 0.8);
+    }
+}
+
+/* Улучшенные эффекты для кнопок */
+.quick-bet-large:active::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    to {
+        width: 100px;
+        height: 100px;
+        opacity: 0;
+    }
+}
+
+/* Улучшенная анимация краша для новых элементов */
+.rocket-container-enhanced.crashed {
+    animation: enhanced-crash-explosion 0.8s ease-out forwards;
+}
+
+@keyframes enhanced-crash-explosion {
+    0% { 
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+        filter: brightness(1.3) saturate(1);
+    }
+    25% { 
+        transform: scale(1.4) rotate(45deg);
+        opacity: 0.9;
+        filter: brightness(2.5) saturate(0.3) blur(1px);
+    }
+    50% { 
+        transform: scale(1.8) rotate(180deg);
+        opacity: 0.7;
+        filter: brightness(3) saturate(0.2) blur(3px);
+    }
+    75% { 
+        transform: scale(2.2) rotate(270deg);
+        opacity: 0.4;
+        filter: brightness(1.5) saturate(0) blur(5px);
+    }
+    100% { 
+        transform: scale(0.3) rotate(360deg);
+        opacity: 0;
+        filter: brightness(0.5) saturate(0) blur(8px);
+    }
+}
+
+/* Анимация для краша следа */
+.rocket-container-enhanced.crashed .rocket-trail-enhanced {
+    animation: enhanced-trail-crash 0.8s ease-out forwards;
+}
+
+@keyframes enhanced-trail-crash {
+    0% { 
+        opacity: 0.9;
+        background: linear-gradient(90deg, rgba(255, 107, 53, 0.9) 0%, transparent 100%);
+        width: 100px;
+    }
+    30% { 
+        opacity: 1;
+        background: linear-gradient(90deg, rgba(255, 0, 0, 1) 0%, rgba(255, 107, 53, 0.6) 40%, transparent 100%);
+        transform: translateY(-50%) scaleX(2.5);
+        width: 150px;
+    }
+    100% { 
+        opacity: 0;
+        background: linear-gradient(90deg, rgba(100, 0, 0, 0.2) 0%, transparent 100%);
+        transform: translateY(-50%) scaleX(0.3);
+        width: 30px;
+    }
+}
+
+/* Анимация для краша свечения */
+.rocket-container-enhanced.crashed .rocket-glow-enhanced {
+    animation: enhanced-glow-crash 0.8s ease-out forwards;
+}
+
+@keyframes enhanced-glow-crash {
+    0% { 
+        opacity: 0.7;
+        background: radial-gradient(circle, rgba(255, 107, 53, 0.5) 0%, transparent 70%);
+    }
+    25% { 
+        opacity: 1;
+        background: radial-gradient(circle, rgba(255, 0, 0, 0.8) 0%, rgba(255, 107, 53, 0.5) 40%, transparent 70%);
+        transform: scale(2.5);
+    }
+    100% { 
+        opacity: 0;
+        background: radial-gradient(circle, rgba(100, 0, 0, 0.1) 0%, transparent 70%);
+        transform: scale(4);
+    }
+}
+
+/* Дополнительные стили для тактильной обратной связи */
+.control-btn-large:active,
+.quick-bet-large:active,
+.bet-button-mega:active,
+.cashout-button-mega:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}
+
+/* Улучшенные стили для фокуса на input элементах */
+.bet-input-large:focus,
+.cashout-input-large:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.input-with-controls:focus-within {
+    border-color: var(--tg-theme-button-color);
+    box-shadow: 0 0 0 3px rgba(82, 136, 193, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Стили для disabled состояний */
+.bet-button-mega:disabled,
+.cashout-button-mega:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+    filter: grayscale(0.5);
+}
+
+/* Анимация появления элементов */
+.crash-game-optimized {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимация тряски для проигрыша */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Анимация пульса для успешных действий */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
