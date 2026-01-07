@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>XudoBudoGame</title>
+    <title>Rocket Flight Game</title>
     <link rel="stylesheet" href="styles.css">
     <script>
         window.addEventListener('DOMContentLoaded', function() {
@@ -13,40 +13,30 @@
                         expand: () => {},
                         ready: () => {},
                         close: () => {},
-                        colorScheme: 'light',
+                        colorScheme: 'dark',
                         onEvent: () => {},
                         HapticFeedback: {
                             impactOccurred: () => {},
                             notificationOccurred: () => {}
                         },
-                        BackButton: {
-                            show: () => {},
-                            hide: () => {}
-                        }
+                        BackButton: { show: () => {}, hide: () => {} }
                     }
                 };
             }
         });
     </script>
-    <script src="https://telegram.org/js/telegram-web-app.js" onerror="console.log('Telegram script not loaded - using fallback')"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="app">
         <!-- Header -->
         <header class="header">
-            <h1 class="logo">XudoBudoGame</h1>
+            <h1 class="logo">Rocket Flight</h1>
             <div class="header-actions">
-                <button class="sound-toggle-btn" onclick="toggleSound()" id="soundToggle">
-                    <span class="sound-icon">🔊</span>
+                <button class="sound-btn" onclick="toggleSound()" id="soundToggle">🔊</button>
+                <button class="balance-btn" onclick="openTopUpModal()">
+                    ⭐ <span class="balance-amount" id="headerBalance">1,000</span>
                 </button>
-                <button class="top-up-btn" onclick="openTopUpModal()">
-                    <span class="top-up-icon">⭐</span>
-                    <span class="top-up-text">Пополнить</span>
-                </button>
-                <div class="balance">
-                    <span class="balance-icon">⭐</span>
-                    <span class="balance-amount">1,000</span>
-                </div>
             </div>
         </header>
 
@@ -54,116 +44,74 @@
         <main class="main-content">
             <!-- Games Section -->
             <section id="games" class="section active">
-                <div class="section-header">
+                <div class="games-container">
                     <h2>Игры</h2>
-                </div>
-                <div class="games-grid">
-                    <div class="game-card crash-game" onclick="showSection('crash')">
-                        <div class="game-card-content">
-                            <div class="game-icon">
-                                <img src="raketa.png" alt="Crash Game" class="rocket-icon">
-                            </div>
-                            <div class="game-info">
-                                <h3>Crash</h3>
-                                <p>Поймай момент и забери выигрыш!</p>
-                            </div>
+                    <div class="game-card" onclick="showSection('rocket')">
+                        <div class="game-icon">🚀</div>
+                        <div class="game-info">
+                            <h3>Rocket Flight</h3>
+                            <p>Лети вверх и собирай множители!</p>
                         </div>
-                        <div class="game-status online">
-                            <span class="status-dot"></span>
-                            Online
-                        </div>
+                        <div class="game-status">Online</div>
                     </div>
                 </div>
             </section>
 
-            <!-- Crash Game Section - ПРОСТОЙ РАБОЧИЙ ИНТЕРФЕЙС -->
-            <section id="crash" class="section">
-                <div class="crash-game-simple">
-                    <!-- Верхняя панель -->
-                    <div class="crash-top-bar">
-                        <button class="back-button" onclick="showSection('games')">← Назад</button>
-                        <div class="crash-balance">⭐ <span id="crashBalance">1,000</span></div>
-                        <button class="sound-button" onclick="toggleSound()" id="crashSoundBtn">🔊</button>
+            <!-- Rocket Flight Game Section -->
+            <section id="rocket" class="section">
+                <div class="rocket-game">
+                    <!-- Header -->
+                    <div class="game-header">
+                        <button class="back-button" onclick="showSection('games')">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                            </svg>
+                            Назад
+                        </button>
+                        <div class="balance-display">
+                            <span class="balance-icon">⭐</span>
+                            <span class="balance-value" id="gameBalance">1,000</span>
+                        </div>
+                        <button class="sound-toggle" onclick="toggleSound()" id="gameSoundBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                            </svg>
+                        </button>
                     </div>
 
-                    <!-- Игровая область с ракетой -->
-                    <div class="crash-game-area">
-                        <!-- Статус и таймер -->
-                        <div class="crash-status">
-                            <span id="crashStatusText">Ожидание игроков</span>
-                            <span class="crash-timer" id="crashTimer">5</span>
+                    <!-- Game Area -->
+                    <div class="game-area" id="gameArea">
+                        <div class="game-status" id="gameStatus">Нажми для старта</div>
+                        <div class="score-display">
+                            <div class="score" id="score">0</div>
+                            <div class="multiplier" id="multiplier">x1.0</div>
                         </div>
-
-                        <!-- Множитель -->
-                        <div class="crash-multiplier" id="crashMultiplier">1.00x</div>
-
-                        <!-- График -->
-                        <canvas id="gameCanvas" class="crash-canvas"></canvas>
                         
-                        <!-- Ракета -->
-                        <div class="crash-rocket" id="rocketPlane">
-                            <img src="raketa.png" alt="Rocket" class="rocket-img">
-                        </div>
-                    </div>
-
-                    <!-- История -->
-                    <div class="crash-history">
-                        <div class="history-title">История:</div>
-                        <div class="history-items" id="crashHistory">
-                            <span class="history-item high">5.67x</span>
-                            <span class="history-item medium">2.45x</span>
-                            <span class="history-item low">1.23x</span>
-                            <span class="history-item high">8.91x</span>
-                            <span class="history-item low">1.05x</span>
-                        </div>
-                    </div>
-
-                    <!-- Панель ставок -->
-                    <div class="crash-betting">
-                        <!-- Ставка -->
-                        <div class="bet-section">
-                            <label>Ставка:</label>
-                            <div class="bet-controls">
-                                <button onclick="adjustBet(-10)">-</button>
-                                <input type="number" id="betAmountInput" value="100" min="1">
-                                <button onclick="adjustBet(10)">+</button>
+                        <!-- Game Canvas -->
+                        <canvas id="gameCanvas" class="game-canvas"></canvas>
+                        
+                        <!-- Start Button -->
+                        <button class="start-button" id="startButton" onclick="startGame()">
+                            🚀 СТАРТ
+                        </button>
+                        
+                        <!-- Game Over Screen -->
+                        <div class="game-over" id="gameOver" style="display: none;">
+                            <h3>Игра окончена!</h3>
+                            <div class="final-score">
+                                <div>Очки: <span id="finalScore">0</span></div>
+                                <div>Множитель: <span id="finalMultiplier">x1.0</span></div>
                             </div>
-                        </div>
-
-                        <!-- Авто-вывод -->
-                        <div class="auto-section">
-                            <label>Авто-вывод:</label>
-                            <div class="auto-controls">
-                                <button onclick="adjustCashout(-0.1)">-</button>
-                                <input type="number" id="autoCashoutInput" value="2.00" min="1.01" step="0.01">
-                                <button onclick="adjustCashout(0.1)">+</button>
-                            </div>
-                        </div>
-
-                        <!-- Быстрые ставки -->
-                        <div class="quick-bets">
-                            <button onclick="setQuickBet(50)">50</button>
-                            <button onclick="setQuickBet(100)">100</button>
-                            <button onclick="setQuickBet(250)">250</button>
-                            <button onclick="setQuickBet(500)">500</button>
-                        </div>
-
-                        <!-- Кнопки действий -->
-                        <div class="action-buttons">
-                            <button class="bet-button" id="crashBetBtn" onclick="placeCrashBet()">
-                                Поставить <span class="btn-amount">100 ⭐</span>
-                            </button>
-                            <button class="cashout-button" id="crashCashoutBtn" onclick="crashCashout()" disabled>
-                                Забрать <span class="btn-amount">0 ⭐</span>
-                            </button>
+                            <button onclick="restartGame()">Играть снова</button>
                         </div>
                     </div>
 
-                    <!-- Игроки -->
-                    <div class="crash-players">
-                        <div class="players-title">Игроки онлайн: <span id="crashOnlineCount">1</span></div>
-                        <div class="players-list" id="crashPlayersList">
-                            <!-- Игроки добавляются динамически -->
+                    <!-- Controls -->
+                    <div class="controls">
+                        <div class="control-info">
+                            <p>🎮 Управление: Нажимай на экран чтобы лететь вверх</p>
+                            <p>⭐ Собирай множители для увеличения очков</p>
+                            <p>⚡ Ракета ускоряется со временем</p>
                         </div>
                     </div>
                 </div>
@@ -171,44 +119,38 @@
 
             <!-- Freebies Section -->
             <section id="freebies" class="section">
-                <div class="section-header">
-                    <h2>Халява</h2>
-                </div>
                 <div class="freebies-container">
+                    <h2>Халява</h2>
                     <div class="freebie-card">
                         <div class="freebie-icon">🎁</div>
                         <h3>Промокод</h3>
                         <p>Введи промокод и получи награду</p>
-                        <button class="promo-btn" onclick="openPromoModal()">Ввести</button>
+                        <button onclick="openPromoModal()">Ввести</button>
                     </div>
                 </div>
             </section>
 
             <!-- Profile Section -->
             <section id="profile" class="section">
-                <div class="section-header">
-                    <h2>Профиль</h2>
-                </div>
                 <div class="profile-container">
-                    <div class="profile-avatar">
-                        <div class="avatar-circle">
-                            <span class="avatar-text">XB</span>
+                    <h2>Профиль</h2>
+                    <div class="profile-info">
+                        <div class="avatar">XB</div>
+                        <div class="user-info">
+                            <h3>Player</h3>
+                            <p>Уровень 1</p>
                         </div>
                     </div>
-                    <div class="profile-info">
-                        <h3 class="username">Player</h3>
-                        <p class="user-level">Уровень 1</p>
-                    </div>
-                    <div class="profile-stats">
-                        <div class="stat-item">
+                    <div class="stats">
+                        <div class="stat">
                             <span class="stat-value" id="profileBalance">1,000</span>
                             <span class="stat-label">Звезды</span>
                         </div>
-                        <div class="stat-item">
+                        <div class="stat">
                             <span class="stat-value" id="profileGames">0</span>
                             <span class="stat-label">Игр</span>
                         </div>
-                        <div class="stat-item">
+                        <div class="stat">
                             <span class="stat-value" id="profileWins">0</span>
                             <span class="stat-label">Побед</span>
                         </div>
@@ -217,107 +159,38 @@
             </section>
         </main>
 
-        <!-- Promo Code Modal -->
+        <!-- Modals -->
         <div id="promoModal" class="modal">
-            <div class="modal-content promo-modal">
+            <div class="modal-content">
                 <div class="modal-header">
                     <h3>🎁 Промокод</h3>
-                    <button class="close-btn" onclick="closePromoModal()">&times;</button>
+                    <button class="close-btn" onclick="closePromoModal()">×</button>
                 </div>
-                <div class="promo-container">
-                    <div class="promo-info">
-                        <div class="promo-description">
-                            Введите промокод и получите бонусные звезды!
-                        </div>
-                    </div>
-                    
-                    <div class="promo-input-section">
-                        <div class="promo-input-wrapper">
-                            <input type="text" id="promoCodeInput" placeholder="Введите промокод" maxlength="20">
-                            <span class="input-icon">🎁</span>
-                        </div>
-                        <button class="activate-promo-btn" onclick="activatePromoCode()">
-                            Активировать
-                        </button>
-                    </div>
-                    
-                    <div class="promo-history">
-                        <div class="history-title">Активированные промокоды:</div>
-                        <div class="activated-promos" id="activatedPromos">
-                            <div class="no-promos">Промокоды еще не активированы</div>
-                        </div>
-                    </div>
+                <div class="modal-body">
+                    <input type="text" id="promoInput" placeholder="Введите промокод">
+                    <button onclick="activatePromo()">Активировать</button>
                 </div>
             </div>
         </div>
 
-        <!-- Top Up Modal -->
         <div id="topUpModal" class="modal">
-            <div class="modal-content top-up-modal">
+            <div class="modal-content">
                 <div class="modal-header">
-                    <h3>💎 Пополнение баланса</h3>
-                    <button class="close-btn" onclick="closeTopUpModal()">&times;</button>
+                    <h3>💰 Пополнение</h3>
+                    <button class="close-btn" onclick="closeTopUpModal()">×</button>
                 </div>
-                <div class="top-up-container">
+                <div class="modal-body">
                     <div class="balance-display">
-                        <div class="balance-card">
-                            <div class="balance-icon">⭐</div>
-                            <div class="balance-info">
-                                <span class="balance-label">Текущий баланс</span>
-                                <span class="balance-value" id="currentBalance">1,000 ⭐</span>
-                            </div>
-                        </div>
+                        Текущий баланс: <span id="currentBalance">1,000</span> ⭐
                     </div>
-                    
-                    <div class="top-up-section">
-                        <div class="section-title">
-                            <h4>💰 Сумма пополнения</h4>
-                            <p class="section-subtitle">Выберите или введите желаемую сумму</p>
-                        </div>
-                        
-                        <div class="quick-amounts">
-                            <button class="quick-amount-btn" onclick="setQuickAmount(100)">
-                                <span class="amount">100</span>
-                                <span class="currency">⭐</span>
-                            </button>
-                            <button class="quick-amount-btn" onclick="setQuickAmount(500)">
-                                <span class="amount">500</span>
-                                <span class="currency">⭐</span>
-                            </button>
-                            <button class="quick-amount-btn" onclick="setQuickAmount(1000)">
-                                <span class="amount">1,000</span>
-                                <span class="currency">⭐</span>
-                            </button>
-                            <button class="quick-amount-btn" onclick="setQuickAmount(2500)">
-                                <span class="amount">2,500</span>
-                                <span class="currency">⭐</span>
-                            </button>
-                        </div>
-                        
-                        <div class="custom-amount">
-                            <div class="amount-input-container">
-                                <div class="input-wrapper">
-                                    <span class="input-icon">💎</span>
-                                    <input type="number" id="topUpAmount" placeholder="Введите сумму" min="1" max="10000" value="">
-                                    <span class="input-currency">⭐</span>
-                                </div>
-                                <div class="input-hint">От 1 до 10,000 звезд</div>
-                            </div>
-                        </div>
-                        
-                        <div class="purchase-section">
-                            <button class="premium-purchase-btn" onclick="purchaseFromInput()">
-                                <div class="btn-content">
-                                    <span class="btn-icon">🚀</span>
-                                    <span class="btn-text">Пополнить баланс</span>
-                                </div>
-                                <div class="btn-shine"></div>
-                            </button>
-                            <div class="payment-info">
-                                <span class="payment-secure">🔒 Безопасная оплата через Telegram Stars</span>
-                            </div>
-                        </div>
+                    <div class="amount-buttons">
+                        <button onclick="setTopUpAmount(100)">100 ⭐</button>
+                        <button onclick="setTopUpAmount(500)">500 ⭐</button>
+                        <button onclick="setTopUpAmount(1000)">1,000 ⭐</button>
+                        <button onclick="setTopUpAmount(2500)">2,500 ⭐</button>
                     </div>
+                    <input type="number" id="topUpAmount" placeholder="Или введите сумму">
+                    <button onclick="purchaseStars()">Пополнить</button>
                 </div>
             </div>
         </div>
