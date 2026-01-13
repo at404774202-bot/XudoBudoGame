@@ -1,25 +1,29 @@
 {
-  "name": "xudobudogame-welcome-bot",
+  "name": "xudobudo-app",
   "version": "1.0.0",
-  "description": "Приветственный бот для XudoBudoGame с кнопкой запуска игры",
+  "description": "XudoBudo App - Telegram Mini App",
   "main": "welcome-bot.js",
   "scripts": {
     "start": "node welcome-bot.js",
+    "bot": "node welcome-bot.js",
+    "local": "npx http-server . -p 8080 -c-1",
     "dev": "nodemon welcome-bot.js"
   },
+  "keywords": [
+    "telegram",
+    "mini-app",
+    "xudobudo"
+  ],
+  "author": "XudoBudo",
+  "license": "MIT",
   "dependencies": {
     "node-telegram-bot-api": "^0.64.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.1",
+    "http-server": "^14.1.1"
   },
-  "keywords": [
-    "telegram",
-    "bot",
-    "game",
-    "welcome",
-    "crash"
-  ],
-  "author": "XudoBudoGame",
-  "license": "MIT"
+  "engines": {
+    "node": ">=16.0.0"
+  }
 }
