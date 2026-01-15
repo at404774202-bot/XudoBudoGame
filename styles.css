@@ -756,3 +756,133 @@ body {
     font-size: 14px;
     margin: 4px 0;
 }
+/* Пользовательский ввод количества звезд */
+.custom-amount {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    border: 1px solid var(--setting-border);
+}
+
+.custom-amount label {
+    display: block;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.amount-input {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    background: var(--setting-bg);
+    border: 2px solid var(--setting-border);
+    border-radius: 12px;
+    padding: 4px;
+    transition: all 0.3s ease;
+}
+
+.amount-input:focus-within {
+    border-color: var(--active-color);
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+}
+
+.amount-input input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 600;
+    outline: none;
+}
+
+.amount-input input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.amount-input .currency {
+    padding: 12px 16px;
+    color: var(--active-color);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.buy-custom-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--active-color), #0099cc);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.buy-custom-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+}
+
+.buy-custom-btn:active {
+    transform: scale(0.98);
+}
+
+.divider {
+    text-align: center;
+    margin: 24px 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--setting-border);
+}
+
+.divider span {
+    background: var(--setting-bg);
+    color: var(--text-secondary);
+    padding: 0 16px;
+    font-size: 14px;
+    position: relative;
+}
+
+/* Улучшения для готовых пакетов */
+.stars-packages {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 360px) {
+    .stars-packages {
+        grid-template-columns: 1fr;
+    }
+    
+    .amount-input input {
+        font-size: 16px;
+    }
+}
+
+/* Анимация для успешной покупки */
+@keyframes successPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.success-animation {
+    animation: successPulse 0.6s ease-in-out;
+}

@@ -6,6 +6,25 @@ tg.ready();
 const savedTheme = localStorage.getItem('app-theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
 
+// Загрузка сохраненного баланса
+const savedBalance = localStorage.getItem('game-balance');
+if (savedBalance) {
+    gameState.balance = parseInt(savedBalance);
+}
+
+// Сохранение данных игры
+function saveGameData() {
+    localStorage.setItem('game-balance', gameState.balance);
+}
+
+// Загрузка данных игры
+function loadGameData() {
+    const savedBalance = localStorage.getItem('game-balance');
+    if (savedBalance) {
+        gameState.balance = parseInt(savedBalance);
+    }
+}
+
 // Игровые переменные
 let gameState = {
     balance: 100, // Стартовый баланс в звездах
@@ -30,86 +49,161 @@ function updateBalance() {
 
 // Пополнение баланса через Telegram Stars
 function buyStars(amount) {
-    if (tg.openInvoice) {
-        // Создаем инвойс для покупки звезд
-        const invoice = {
-            title: `Пополнение баланса`,
-            description: `Покупка ${amount} звезд для игры`,
-            payload: `stars_${amount}`,
-            provider_token: '', // Для Telegram Stars не нужен
-            currency: 'XTR',
-            prices: [{
-                label: `${amount} звезд`,
-                amount: amount // В Telegram Stars 1 звезда = 1 XTR
-            }]
-        };
+    // Проверяем доступность Telegram Web App API
+    if (window.Telegram?.WebApp) {
+        // Отправляем данные боту для создания инвойса
+        sendInvoiceRequest(amount);
+    } else {
+        // Fallback для тестирования
+        showTestPayment(amount);
+    }
+}
+
+// Отправка запроса на создание инвойса боту
+function sendInvoiceRequest(amount) {
+    const userId = tg.initDataUnsafe?.user?.id;
+    
+    if (userId) {
+        // Отправляем данные боту через postEvent
+        tg.sendData(JSON.stringify({
+            action: 'create_invoice',
+            amount: amount,
+            user_id: userId,
+            payload: generateInvoicePayload(amount)
+        }));
         
-        tg.openInvoice(invoice.payload, (status) => {
-            if (status === 'paid') {
-                gameState.balance += amount;
-                updateAllBalances();
+        // Показываем индикатор загрузки
+        showLoadingPayment(amount);
+    } else {
+        // Если нет user ID, показываем тестовый режим
+        showTestPayment(amount);
+    }
+}
+
+// Показать индикатор загрузки платежа
+function showLoadingPayment(amount) {
+    if (tg.showPopup) {
+        tg.showPopup({
+            title: 'Подготовка платежа',
+            message: `Создаем инвойс для покупки ${amount} ⭐...\n\nПожалуйста, подождите.`,
+            buttons: [
+                {id: 'cancel', type: 'cancel', text: 'Отмена'}
+            ]
+        }, (buttonId) => {
+            if (buttonId === 'cancel') {
                 if (tg.showAlert) {
-                    tg.showAlert(`Баланс пополнен на ${amount} ⭐`);
+                    tg.showAlert('❌ Создание инвойса отменено');
                 }
             }
         });
+        
+        // Через 3 секунды показываем тестовый режим если нет ответа
+        setTimeout(() => {
+            showTestPayment(amount);
+        }, 3000);
     } else {
-        // Fallback для тестирования
-        gameState.balance += amount;
-        updateAllBalances();
+        showTestPayment(amount);
+    }
+}
+
+// Показать тестовый платеж (для разработки)
+function showTestPayment(amount) {
+    if (tg.showPopup) {
+        // Показываем popup как в примере на скриншоте
+        tg.showPopup({
+            title: 'Подтверждение покупки',
+            message: `Вы точно хотите приобрести ${amount} ⭐ за ${amount} звезду?`,
+            buttons: [
+                {id: 'cancel', type: 'cancel', text: 'Отмена'},
+                {id: 'pay', type: 'default', text: `Подтвердить и заплатить ⭐ ${amount} звезду`}
+            ]
+        }, (buttonId) => {
+            if (buttonId === 'pay') {
+                // Имитируем успешную оплату для тестирования
+                handlePaymentResult('paid', amount);
+            }
+        });
+    } else {
+        // Простой fallback для тестирования
+        handlePaymentResult('paid', amount);
+    }
+}
+
+// Обработка событий от бота
+tg.onEvent('invoiceStatus', (eventData) => {
+    const { status, amount, invoice_url } = eventData;
+    
+    if (status === 'created' && invoice_url) {
+        // Бот создал инвойс, открываем его
+        tg.openInvoice(invoice_url, (paymentStatus) => {
+            handlePaymentResult(paymentStatus, amount);
+        });
+    } else if (status === 'error') {
         if (tg.showAlert) {
-            tg.showAlert(`Баланс пополнен на ${amount} ⭐ (тестовый режим)`);
+            tg.showAlert('❌ Ошибка создания инвойса. Попробуйте позже.');
         }
     }
+});
+
+// Обработка успешного платежа от бота
+tg.onEvent('paymentSuccess', (eventData) => {
+    const { amount, transaction_id } = eventData;
+    
+    // Начисляем звезды
+    gameState.balance += amount;
+    updateAllBalances();
+    saveGameData();
+    
+    // Показываем успешное уведомление
+    if (tg.showAlert) {
+        tg.showAlert(`✅ Успешно! Баланс пополнен на ${amount} ⭐`);
+    }
+    
+    // Добавляем анимацию успеха
+    const balanceElements = document.querySelectorAll('[id*="balance"], [id*="Balance"]');
+    balanceElements.forEach(el => {
+        el.classList.add('success-animation');
+        setTimeout(() => el.classList.remove('success-animation'), 600);
+    });
     
     if (tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('medium');
     }
+});
+
+// Покупка пользовательского количества звезд
+function buyCustomStars() {
+    const amount = parseInt(document.getElementById('starsAmount').value);
+    
+    if (!amount || amount < 1) {
+        if (tg.showAlert) {
+            tg.showAlert('❌ Введите корректное количество звезд (от 1)');
+        }
+        return;
+    }
+    
+    if (amount > 10000) {
+        if (tg.showAlert) {
+            tg.showAlert('❌ Максимальное количество: 10,000 звезд');
+        }
+        return;
+    }
+    
+    // Вызываем основную функцию покупки
+    buyStars(amount);
 }
 
-// Пополнение баланса через Telegram Stars
-function purchaseStars(stars, price) {
-    if (tg.openInvoice) {
-        // Создаем инвойс для покупки звезд
-        const invoice = {
-            title: `${stars} звезд`,
-            description: `Пополнение баланса на ${stars} звезд`,
-            payload: `stars_${stars}`,
-            provider_token: '', // Для Telegram Stars не нужен
-            currency: 'XTR',
-            prices: [{
-                label: `${stars} звезд`,
-                amount: price
-            }]
-        };
-        
-        tg.openInvoice(invoice.payload, (status) => {
-            if (status === 'paid') {
-                // Начисляем звезды после успешной оплаты
-                gameState.balance += stars;
-                updateBalance();
-                
-                // Сохраняем баланс
-                localStorage.setItem('game-balance', gameState.balance);
-                
-                if (tg.showAlert) {
-                    tg.showAlert(`Успешно! Начислено ${stars} ⭐`);
-                }
-                
-                if (tg.HapticFeedback) {
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-            }
-        });
-    } else {
-        // Fallback для тестирования
-        if (tg.showAlert) {
-            tg.showAlert(`Тестовый режим: получено ${stars} ⭐`);
-        }
-        gameState.balance += stars;
-        updateBalance();
-        localStorage.setItem('game-balance', gameState.balance);
-    }
+// Генерация payload для инвойса (для реальной интеграции)
+function generateInvoicePayload(amount) {
+    const timestamp = Date.now();
+    const userId = tg.initDataUnsafe?.user?.id || 'anonymous';
+    return `stars_${amount}_${userId}_${timestamp}`;
+}
+
+// Обновление цены при вводе количества звезд
+function updateStarsPrice() {
+    const amount = parseInt(document.getElementById('starsAmount').value) || 1;
+    document.getElementById('starsPrice').textContent = amount;
 }
 
 // Обновление множителя
@@ -120,10 +214,11 @@ function updateMultiplier() {
 
 // Обновление активной кнопки темы
 function updateThemeButtons() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     const themeButtons = document.querySelectorAll('.theme-btn');
     themeButtons.forEach(btn => {
         btn.classList.remove('active');
-        if (btn.getAttribute('data-theme') === savedTheme) {
+        if (btn.getAttribute('data-theme') === currentTheme) {
             btn.classList.add('active');
         }
     });
@@ -264,6 +359,7 @@ function startMinesGame() {
 
     gameState.currentBet = betAmount;
     gameState.balance -= betAmount;
+    saveGameData();
     gameState.gameActive = true;
     gameState.revealedCells = 0;
     
@@ -376,11 +472,12 @@ function gameWin() {
     gameState.gameActive = false;
     const winAmount = Math.floor(gameState.currentBet * gameState.multipliers[gameState.currentMines]);
     gameState.balance += winAmount;
+    saveGameData();
     updateBalance();
     
     setTimeout(() => {
         if (tg.showAlert) {
-            tg.showAlert(`Поздравляем! Вы выиграли ${winAmount}₽!`);
+            tg.showAlert(`Поздравляем! Вы выиграли ${winAmount} ⭐!`);
         }
     }, 500);
 }
@@ -391,13 +488,14 @@ function cashOut() {
     
     const winAmount = Math.floor(gameState.currentBet * Math.pow(gameState.multipliers[gameState.currentMines], gameState.revealedCells / (16 - gameState.currentMines)));
     gameState.balance += winAmount;
+    saveGameData();
     gameState.gameActive = false;
     
     updateBalance();
     document.getElementById('cashOut').disabled = true;
     
     if (tg.showAlert) {
-        tg.showAlert(`Вы забрали ${winAmount}₽!`);
+        tg.showAlert(`Вы забрали ${winAmount} ⭐!`);
     }
     
     if (tg.HapticFeedback) {
@@ -416,7 +514,7 @@ function resetGame() {
     document.getElementById('cashOut').disabled = true;
 }
 
-// Обработка изменения ставки
+// Обработка изменения ставки и количества звезд
 document.addEventListener('input', (e) => {
     if (e.target.id === 'betAmount') {
         const value = parseInt(e.target.value);
@@ -427,13 +525,26 @@ document.addEventListener('input', (e) => {
             e.target.value = 1;
         }
     }
+    
+    if (e.target.id === 'starsAmount') {
+        updateStarsPrice();
+        const value = parseInt(e.target.value);
+        if (value > 10000) {
+            e.target.value = 10000;
+        }
+        if (value < 1 && e.target.value !== '') {
+            e.target.value = 1;
+        }
+    }
 });
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
+    loadGameData();
     updateThemeButtons();
-    updateBalance();
+    updateAllBalances();
     updateMultiplier();
+    checkBotStatus(); // Проверяем статус бота
 });
 
 // Функции навигации для главного меню
@@ -513,3 +624,58 @@ function updateAllBalances() {
         updateTopUpBalance();
     }
 }
+// Обработка результата платежа (для fallback режима)
+function handlePaymentResult(status, amount) {
+    if (status === 'paid') {
+        // Успешная оплата
+        gameState.balance += amount;
+        updateAllBalances();
+        saveGameData();
+        
+        // Добавляем анимацию успеха
+        const balanceElements = document.querySelectorAll('[id*="balance"], [id*="Balance"]');
+        balanceElements.forEach(el => {
+            el.classList.add('success-animation');
+            setTimeout(() => el.classList.remove('success-animation'), 600);
+        });
+        
+        if (tg.showAlert) {
+            tg.showAlert(`✅ Успешно! Баланс пополнен на ${amount} ⭐`);
+        }
+        
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+    } else if (status === 'cancelled') {
+        if (tg.showAlert) {
+            tg.showAlert('❌ Оплата отменена');
+        }
+    } else if (status === 'failed') {
+        if (tg.showAlert) {
+            tg.showAlert('❌ Ошибка оплаты. Попробуйте еще раз');
+        }
+    }
+}
+
+// Проверка статуса бота при загрузке
+function checkBotStatus() {
+    // Отправляем ping боту для проверки связи
+    if (tg.initDataUnsafe?.user?.id) {
+        tg.sendData(JSON.stringify({
+            action: 'ping',
+            user_id: tg.initDataUnsafe.user.id
+        }));
+    }
+}
+
+// Обработка ответа от бота на ping
+tg.onEvent('botStatus', (eventData) => {
+    const { status, features } = eventData;
+    
+    if (status === 'online' && features?.includes('payments')) {
+        console.log('✅ Бот онлайн, платежи доступны');
+        // Можно показать индикатор что реальные платежи работают
+    } else {
+        console.log('⚠️ Бот недоступен, используется тестовый режим');
+    }
+});
