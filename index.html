@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>XudoBudo Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <div id="main-menu" class="menu-content active">
+            <h1>Главное меню</h1>
+        </div>
+
+        <div id="games-menu" class="menu-content">
+            <h1>Игры</h1>
+        </div>
+
+        <div id="other-menu" class="menu-content">
+            <h1>Другое</h1>
+        </div>
+
+        <nav class="bottom-nav">
+            <button class="nav-button active" data-menu="main-menu">
+                <span class="nav-label">Главное меню</span>
+            </button>
+            <button class="nav-button" data-menu="games-menu">
+                <span class="nav-label">Игры</span>
+            </button>
+            <button class="nav-button" data-menu="other-menu">
+                <span class="nav-label">Другое</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
