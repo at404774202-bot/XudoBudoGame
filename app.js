@@ -8,8 +8,8 @@ document.documentElement.setAttribute('data-theme', savedTheme);
 
 // Игровые переменные
 let gameState = {
-    balance: 1000,
-    currentBet: 100,
+    balance: 100, // Стартовый баланс в звездах
+    currentBet: 10,
     currentMines: 3,
     gameActive: false,
     revealedCells: 0,
@@ -25,7 +25,91 @@ let gameState = {
 
 // Обновление баланса
 function updateBalance() {
-    document.getElementById('balance').textContent = gameState.balance;
+    document.getElementById('balance').textContent = gameState.balance + ' ⭐';
+}
+
+// Пополнение баланса через Telegram Stars
+function buyStars(amount) {
+    if (tg.openInvoice) {
+        // Создаем инвойс для покупки звезд
+        const invoice = {
+            title: `Пополнение баланса`,
+            description: `Покупка ${amount} звезд для игры`,
+            payload: `stars_${amount}`,
+            provider_token: '', // Для Telegram Stars не нужен
+            currency: 'XTR',
+            prices: [{
+                label: `${amount} звезд`,
+                amount: amount // В Telegram Stars 1 звезда = 1 XTR
+            }]
+        };
+        
+        tg.openInvoice(invoice.payload, (status) => {
+            if (status === 'paid') {
+                gameState.balance += amount;
+                updateAllBalances();
+                if (tg.showAlert) {
+                    tg.showAlert(`Баланс пополнен на ${amount} ⭐`);
+                }
+            }
+        });
+    } else {
+        // Fallback для тестирования
+        gameState.balance += amount;
+        updateAllBalances();
+        if (tg.showAlert) {
+            tg.showAlert(`Баланс пополнен на ${amount} ⭐ (тестовый режим)`);
+        }
+    }
+    
+    if (tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+    }
+}
+
+// Пополнение баланса через Telegram Stars
+function purchaseStars(stars, price) {
+    if (tg.openInvoice) {
+        // Создаем инвойс для покупки звезд
+        const invoice = {
+            title: `${stars} звезд`,
+            description: `Пополнение баланса на ${stars} звезд`,
+            payload: `stars_${stars}`,
+            provider_token: '', // Для Telegram Stars не нужен
+            currency: 'XTR',
+            prices: [{
+                label: `${stars} звезд`,
+                amount: price
+            }]
+        };
+        
+        tg.openInvoice(invoice.payload, (status) => {
+            if (status === 'paid') {
+                // Начисляем звезды после успешной оплаты
+                gameState.balance += stars;
+                updateBalance();
+                
+                // Сохраняем баланс
+                localStorage.setItem('game-balance', gameState.balance);
+                
+                if (tg.showAlert) {
+                    tg.showAlert(`Успешно! Начислено ${stars} ⭐`);
+                }
+                
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            }
+        });
+    } else {
+        // Fallback для тестирования
+        if (tg.showAlert) {
+            tg.showAlert(`Тестовый режим: получено ${stars} ⭐`);
+        }
+        gameState.balance += stars;
+        updateBalance();
+        localStorage.setItem('game-balance', gameState.balance);
+    }
 }
 
 // Обновление множителя
@@ -191,7 +275,7 @@ function startMinesGame() {
     
     // Обновляем интерфейс
     updateBalance();
-    document.getElementById('currentBet').textContent = betAmount + '₽';
+    document.getElementById('currentBet').textContent = betAmount + ' ⭐';
     document.getElementById('currentMines').textContent = gameState.currentMines;
     document.getElementById('currentMultiplier').textContent = gameState.multipliers[gameState.currentMines] + 'x';
     
@@ -339,8 +423,8 @@ document.addEventListener('input', (e) => {
         if (value > gameState.balance) {
             e.target.value = gameState.balance;
         }
-        if (value < 10) {
-            e.target.value = 10;
+        if (value < 1) {
+            e.target.value = 1;
         }
     }
 });
@@ -351,3 +435,81 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBalance();
     updateMultiplier();
 });
+
+// Функции навигации для главного меню
+function showTopUpMenu() {
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('main-menu').classList.remove('active');
+    
+    const topupMenu = document.getElementById('topup-menu');
+    topupMenu.style.display = 'block';
+    setTimeout(() => {
+        topupMenu.classList.add('active');
+        updateTopUpBalance();
+    }, 10);
+}
+
+function backToMain() {
+    document.getElementById('topup-menu').style.display = 'none';
+    document.getElementById('topup-menu').classList.remove('active');
+    
+    const mainMenu = document.getElementById('main-menu');
+    mainMenu.style.display = 'block';
+    setTimeout(() => {
+        mainMenu.classList.add('active');
+        updateMainBalance();
+    }, 10);
+}
+
+function switchToGames() {
+    // Переключаем активную кнопку навигации
+    document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelector('[data-menu="games-menu"]').classList.add('active');
+    
+    // Переключаем меню
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('main-menu').classList.remove('active');
+    
+    const gamesMenu = document.getElementById('games-menu');
+    gamesMenu.style.display = 'block';
+    setTimeout(() => {
+        gamesMenu.classList.add('active');
+    }, 10);
+}
+
+function switchToSettings() {
+    // Переключаем активную кнопку навигации
+    document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelector('[data-menu="settings-menu"]').classList.add('active');
+    
+    // Переключаем меню
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('main-menu').classList.remove('active');
+    
+    const settingsMenu = document.getElementById('settings-menu');
+    settingsMenu.style.display = 'block';
+    setTimeout(() => {
+        settingsMenu.classList.add('active');
+        updateThemeButtons();
+    }, 10);
+}
+
+// Обновление баланса в разных местах
+function updateMainBalance() {
+    document.getElementById('mainBalance').textContent = gameState.balance + ' ⭐';
+}
+
+function updateTopUpBalance() {
+    document.getElementById('topupBalance').textContent = gameState.balance + ' ⭐';
+}
+
+// Обновляем все балансы при изменении
+function updateAllBalances() {
+    updateBalance();
+    if (document.getElementById('mainBalance')) {
+        updateMainBalance();
+    }
+    if (document.getElementById('topupBalance')) {
+        updateTopUpBalance();
+    }
+}
